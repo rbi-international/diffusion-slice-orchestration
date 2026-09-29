@@ -26,6 +26,9 @@ def paired_comparison(a: np.ndarray, b: np.ndarray) -> dict:
     a, b = np.asarray(a, float), np.asarray(b, float)
     d = a - b
     n = len(d)
+    if n == 0:
+        return {"n": 0, "mean_a": np.nan, "mean_b": np.nan, "mean_diff": np.nan, "ci_low": np.nan,
+                "ci_high": np.nan, "cohen_dz": np.nan, "p_t": np.nan, "p_wilcoxon": np.nan}
     mean = d.mean()
     sd = d.std(ddof=1) if n > 1 else np.nan
     if n > 1 and sd > 0:

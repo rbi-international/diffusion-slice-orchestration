@@ -230,6 +230,15 @@ def _forecast_job(cfg: Dict, workload: str, seed: int) -> List[Dict]:
             q = med = f.point(traces, t_idx)
             row.update(crps=float(np.abs(med - y).mean()), energy_score=float(np.linalg.norm(med - y, axis=-1).mean()),
                        sample_spread=0.0)
+        # identical quantile-grid CRPS for every forecaster, so the column is comparable
+        lv = np.array(cfg["forecasters"]["quantile_mlp"]["levels"])
+        if n == "QuantileMLP":
+            grid = f.quantiles(traces, t_idx)
+        elif f.distributional:
+            grid = np.moveaxis(np.quantile(s, lv, axis=2), 0, 2)
+        else:
+            grid = np.repeat(med[:, :, None, :], len(lv), axis=2)
+        row["crps_grid"] = float(crps_quantiles(grid, lv, y).mean())
         row.update(nmae=float(np.abs(med - y).sum() / y.sum()),
                    rmse=float(np.sqrt(((med - y) ** 2).mean())),
                    quantile_pinball=float(pinball(y, q, tau).mean()),
