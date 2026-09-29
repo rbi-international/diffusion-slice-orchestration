@@ -3,15 +3,51 @@
 Conditional denoising diffusion for joint computation-communication slice
 orchestration in 5G/6G cloud-edge networks.
 
-This repository contains the complete, tested code and the saved results for
-the manuscript by **Gurpreet Singh** and **Rohit Bharti** (School of Computer
-Science and Engineering, Lovely Professional University). It extends the
-GAN-JCSO framework of Qiu and Zhang
-([J. Cloud Comput. 2026, doi:10.1186/s13677-026-00985-4](https://doi.org/10.1186/s13677-026-00985-4))
-by replacing its conditional GAN demand sampler with a conditional DDPM, while
-keeping the system model, reservation rule and isolation-aware placement
-unchanged. The only difference between GAN-JCSO and Diffusion-JCSO is the
-generator.
+This repository accompanies the manuscript by **Gurpreet Singh** and
+**Rohit Bharti** (School of Computer Science and Engineering, Lovely
+Professional University). The study asks two questions about generative demand
+forecasting for joint bandwidth-CPU slice orchestration in 5G/6G cloud-edge
+networks:
+
+1. Does a conditional denoising diffusion probabilistic model (DDPM) represent
+   the uncertainty of bursty slice demand more faithfully than a conditional
+   GAN?
+2. Does better-calibrated demand uncertainty translate into better slice
+   reservation once resource consumption is held equal?
+
+### Contributions of this work
+
+* **Diffusion-JCSO**, a conditional DDPM sampler for two-dimensional
+  bandwidth-CPU demand, designed for short sampling chains (K = 20 with a
+  cosine noise schedule whose forward process reaches noise), with training
+  length selected on a validation window.
+* **A distributional evaluation of demand generators** (CRPS, energy score,
+  pinball loss, quantile coverage), which exposes the under-dispersion of the
+  adversarially trained generator.
+* **Matched-resource evaluation**: miss-rate versus over-reservation frontiers,
+  traced by two independent levers, so that forecast quality is separated from
+  the amount of capacity a controller consumes.
+* **Additional controls and conditions**: a direct quantile-regression
+  estimator, a proactive reservation setting, four burst regimes, three
+  capacity levels, public B5G trace replay, and ten seeds with paired,
+  Holm-corrected tests.
+* **An audit of the published orchestration model**, including an
+  inconsistency between its isolation screen and its admission threshold
+  (see `docs/CHANGES_FROM_PROTOTYPE.md`).
+* **An open, tested implementation**, in which every reported number is
+  regenerated from saved CSV files with recorded provenance.
+
+### Relation to prior work
+
+The orchestration environment (slice classes, edge nodes, latency and queue
+model, reservation rule and isolation-aware placement) reimplements, from its
+published equations, the GAN-JCSO framework of Qiu and Zhang
+([J. Cloud Comput. 2026, doi:10.1186/s13677-026-00985-4](https://doi.org/10.1186/s13677-026-00985-4)).
+It is deliberately held fixed and used as a published, citable testbed: when
+every controller runs in the same environment, differences in outcome can be
+attributed to the demand model rather than to changes in the simulator. All
+equations and parameter values taken from that work are cited in
+`configs/base.yaml` and in the source code.
 
 ## Repository layout
 
@@ -89,14 +125,30 @@ commit, library versions, platform and the full resolved configuration.
 * Comparisons are two-sided paired tests over seeds with Holm correction
   within each metric family.
 
+### Verifying the results on another machine
+
+Write the rerun to a separate folder so the saved results are not overwritten,
+then compare:
+
+```bash
+python scripts/run_experiment.py configs/orchestration.yaml --jobs 8 --out results/verify/orchestration
+python scripts/compare_runs.py results/orchestration results/verify/orchestration
+```
+
+The whole suite needs no GPU. On two CPU cores it takes about 25 minutes; the
+runner fixes every numerical library to one thread per worker process.
+
 ### Numerical reproducibility
 
 Every random draw is seeded by its logical position (seed, model, slot, slice),
 PyTorch runs single-threaded with deterministic algorithms, and all versions
-are pinned. Re-running on the same platform reproduces the saved CSVs exactly.
-PyTorch does not guarantee bit-identical floating point across operating
-systems or CPU instruction sets, so a run on a different machine may differ in
-the last digits; conclusions should not change.
+are pinned. A rerun on the same platform reproduces the saved CSV files
+exactly. PyTorch does not guarantee bit-identical floating point across
+operating systems or CPU instruction sets, and neural-network training
+amplifies last-digit differences over many epochs, so a run on a different
+platform yields different individual trained models and therefore different
+per-seed rows. The claims in the manuscript are stated over ten seeds and are
+checked for agreement across platforms with `scripts/compare_runs.py`.
 
 ## Citation
 

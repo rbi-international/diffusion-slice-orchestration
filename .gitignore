@@ -35,3 +35,6 @@ results/**/slot_level*.csv.gz
 results/**/*.pt
 results/scratch/
 logs/
+
+# Verification reruns
+results/verify/

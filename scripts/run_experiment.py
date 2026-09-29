@@ -5,6 +5,14 @@ Usage:
 """
 from __future__ import annotations
 
+import os
+
+# One math-library thread per worker process. Must be set before numpy or torch
+# is imported; child processes inherit it. Without this, N workers each start one
+# thread per CPU core and contend for the cores (severe slow-downs on Windows).
+for _var in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ.setdefault(_var, "1")
+
 import argparse
 import sys
 import time
@@ -23,16 +31,18 @@ def main() -> None:
     ap.add_argument("config", type=Path)
     ap.add_argument("--jobs", type=int, default=1, help="parallel worker processes")
     ap.add_argument("--seeds", type=int, nargs="*", help="override protocol seeds")
+    ap.add_argument("--out", type=Path, help="write here instead of the config's output folder "
+                    "(use this for verification reruns so the saved results are not overwritten)")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
     cfg = apply_selected(cfg, ROOT)
     if args.seeds:
         cfg["protocol"]["seeds"] = args.seeds
-    out = ROOT / cfg["output"]
+    out = args.out.resolve() if args.out else ROOT / cfg["output"]
     out.mkdir(parents=True, exist_ok=True)
     kind = cfg["experiment"]
-    print(f"[{kind}] -> {out.relative_to(ROOT)}  (jobs={args.jobs})", flush=True)
+    print(f"[{kind}] -> {out}  (jobs={args.jobs})", flush=True)
     t0 = time.time()
     EXPERIMENTS[kind](cfg, out, args.jobs)
     elapsed = time.time() - t0

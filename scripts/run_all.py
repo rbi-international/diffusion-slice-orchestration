@@ -10,12 +10,17 @@ statistical analysis -> figures.
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 STEPS = ["validation", "orchestration", "forecast", "frontier", "ablation", "b5g"]
+
+
+for _var in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ.setdefault(_var, "1")
 
 
 def run(cmd: list[str]) -> None:

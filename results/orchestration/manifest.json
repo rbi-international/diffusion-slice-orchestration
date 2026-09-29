@@ -2,8 +2,10 @@
   "created_utc": "2026-09-29T10:44:06+00:00",
   "command": "scripts/run_experiment.py configs/orchestration.yaml --jobs 2",
   "git": {
-    "commit": "53029f24fe257cbcff5687f1dddc0fd2c4b04eb1",
-    "dirty": false
+    "commit": "e3d48be",
+    "dirty": false,
+    "commit_original": "53029f24fe257cbcff5687f1dddc0fd2c4b04eb1",
+    "note": "History rewritten on 2026-09-30 to remove commit-message trailers; the file tree of e3d48be is identical to that of 53029f2."
   },
   "environment": {
     "python": "3.11.15",

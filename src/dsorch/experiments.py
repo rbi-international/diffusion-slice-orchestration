@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import copy
 import time
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Tuple
 
@@ -48,11 +48,28 @@ def _init_worker() -> None:
 
 
 def run_parallel(fn: Callable, jobs: List[tuple], n_proc: int) -> List:
+    """Run jobs, print one progress line per finished job, return results in job order."""
+    t0 = time.perf_counter()
+    n = len(jobs)
+
+    def report(done: int) -> None:
+        el = time.perf_counter() - t0
+        print(f"  {fn.__name__.strip('_')}: {done}/{n} jobs done, {el:.0f} s elapsed", flush=True)
+
     if n_proc <= 1:
         _init_worker()
-        return [fn(*j) for j in jobs]
+        out = []
+        for i, j in enumerate(jobs, 1):
+            out.append(fn(*j))
+            report(i)
+        return out
+    results: List = [None] * n
     with ProcessPoolExecutor(max_workers=n_proc, initializer=_init_worker) as ex:
-        return list(ex.map(fn, *zip(*jobs)))
+        futures = {ex.submit(fn, *j): i for i, j in enumerate(jobs)}
+        for done, fut in enumerate(as_completed(futures), 1):
+            results[futures[fut]] = fut.result()
+            report(done)
+    return results
 
 
 def apply_selected(cfg: Dict, root: Path) -> Dict:
