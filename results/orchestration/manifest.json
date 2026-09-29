@@ -1,0 +1,213 @@
+{
+  "created_utc": "2026-09-29T10:44:06+00:00",
+  "command": "scripts/run_experiment.py configs/orchestration.yaml --jobs 2",
+  "git": {
+    "commit": "53029f24fe257cbcff5687f1dddc0fd2c4b04eb1",
+    "dirty": false
+  },
+  "environment": {
+    "python": "3.11.15",
+    "platform": "Linux-6.18.44-fc-v49-x86_64-with-glibc2.39",
+    "numpy": "2.4.4",
+    "pandas": "3.0.2",
+    "scipy": "1.17.1",
+    "matplotlib": "3.10.9",
+    "torch": "2.14.0+cu130",
+    "cpu_count": 2
+  },
+  "config": {
+    "protocol": {
+      "slots": 260,
+      "fit_slots": 100,
+      "test_start": 100,
+      "seeds": [
+        3,
+        11,
+        27,
+        41,
+        59,
+        73,
+        89,
+        97,
+        113,
+        131
+      ],
+      "information": "request_observed"
+    },
+    "slices": [
+      {
+        "name": "eMBB",
+        "deadline_ms": 6.8,
+        "weight": 0.35,
+        "base_bw": 42.0,
+        "base_cpu": 28.0,
+        "alpha": 1.35,
+        "eta": 0.2,
+        "chi_tx": 1.0,
+        "chi_edge": 1.0
+      },
+      {
+        "name": "URLLC",
+        "deadline_ms": 2.6,
+        "weight": 0.45,
+        "base_bw": 18.0,
+        "base_cpu": 18.0,
+        "alpha": 1.3,
+        "eta": 0.35,
+        "chi_tx": 0.72,
+        "chi_edge": 0.78
+      },
+      {
+        "name": "mMTC",
+        "deadline_ms": 4.0,
+        "weight": 0.2,
+        "base_bw": 12.0,
+        "base_cpu": 32.0,
+        "alpha": 1.18,
+        "eta": 0.25,
+        "chi_tx": 1.0,
+        "chi_edge": 1.0
+      }
+    ],
+    "coupling": {
+      "eMBB-URLLC": 0.42,
+      "eMBB-mMTC": 0.31,
+      "URLLC-mMTC": 0.36
+    },
+    "nodes": {
+      "bw": [
+        122.0,
+        105.0,
+        95.0,
+        84.0
+      ],
+      "cpu": [
+        118.0,
+        132.0,
+        112.0,
+        98.0
+      ],
+      "prop_ms": [
+        1.9,
+        2.6,
+        3.2,
+        4.1
+      ]
+    },
+    "latency": {
+      "tau_b": 0.42,
+      "nu_b": 0.014,
+      "tau_c": 0.55,
+      "nu_c": 0.02,
+      "lambda_b": 0.12,
+      "lambda_c": 0.14,
+      "eps": 0.001,
+      "penalty_mult": 2.2
+    },
+    "queue": {
+      "delta": 0.55,
+      "xi_unassigned": 0.15,
+      "q_max": 45.0
+    },
+    "isolation": {
+      "theta": 0.52,
+      "admission_min_index": 0.25,
+      "admission_min_ratio": 0.85
+    },
+    "control": {
+      "kappa": 0.18,
+      "beta": 0.12,
+      "gamma": 0.55,
+      "fit_scale": 2.0,
+      "quantile": 0.86,
+      "samples": 12,
+      "history": 5,
+      "blend_generator": 0.62,
+      "lwma_a": 0.35,
+      "lwma_b": 0.65
+    },
+    "baselines": {
+      "independent_margin": 1.02,
+      "static_safety": 1.25
+    },
+    "workload": {
+      "burst_factors": {
+        "normal": 0.8,
+        "medium": 1.4,
+        "heavy": 2.0,
+        "extreme": 2.6
+      }
+    },
+    "forecasters": {
+      "gan": {
+        "latent_dim": 8,
+        "hidden": 48,
+        "epochs": 400,
+        "batch_size": 96,
+        "lr": 0.002,
+        "betas": [
+          0.5,
+          0.999
+        ],
+        "lambda_c": 0.25
+      },
+      "ddpm": {
+        "steps": 20,
+        "schedule": "cosine",
+        "linear_beta_start": 0.0001,
+        "linear_beta_end": 0.35,
+        "variance": "posterior",
+        "time_dim": 8,
+        "hidden": 48,
+        "epochs": 1600,
+        "batch_size": 96,
+        "lr": 0.002
+      },
+      "quantile_mlp": {
+        "hidden": 48,
+        "epochs": 160,
+        "batch_size": 96,
+        "lr": 0.002,
+        "levels": [
+          0.05,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.86,
+          0.9,
+          0.95
+        ]
+      }
+    },
+    "evaluation": {
+      "forecast_eval_samples": 200
+    },
+    "experiment": "orchestration",
+    "output": "results/orchestration",
+    "use_selected": "results/validation/selected.yaml",
+    "grid": {
+      "workloads": [
+        "normal",
+        "medium",
+        "heavy",
+        "extreme"
+      ],
+      "capacity": [
+        1.0,
+        0.92,
+        0.82
+      ],
+      "information": [
+        "request_observed",
+        "proactive"
+      ]
+    }
+  },
+  "experiment": "orchestration",
+  "wall_seconds": 204.0
+}

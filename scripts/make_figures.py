@@ -142,7 +142,7 @@ def fig_frontier() -> None:
     df = df[(df["workload"] == "heavy") & (df["capacity"] == 1.0)]
     infos = [i for i in INFO_LABEL if i in set(df["information"])]
     levers = [("scale", "Envelope scale"), ("quantile", "Reservation quantile")]
-    fig, axes = plt.subplots(len(levers), len(infos), figsize=(DOUBLE * 0.75, 4.4), sharey="row", squeeze=False)
+    fig, axes = plt.subplots(len(levers), len(infos), figsize=(DOUBLE * 0.75, 4.6), squeeze=False)
     letters = iter("abcd")
     for r, (lever, lever_label) in enumerate(levers):
         for c, info in enumerate(infos):
@@ -155,7 +155,9 @@ def fig_frontier() -> None:
                 col, mk = STYLE[m]
                 ax.plot(g["over_reservation"], g["miss_rate"], color=col, marker=mk, label=m,
                         markeredgecolor="white", markeredgewidth=0.4)
-            ax.set_title(f"{INFO_LABEL[info]}; lever: {lever_label.lower()}", color=INK)
+            ax.set_title(f"{INFO_LABEL[info]}\nlever: {lever_label.lower()}", color=INK)
+            if lever == "scale":
+                ax.set_xlim(0, 90)
             ax.set_xlabel("Over-reservation (% of demand)")
             if c == 0:
                 ax.set_ylabel("Miss rate (%)")
@@ -177,11 +179,12 @@ def fig_training() -> None:
     for ax, model, cols, letter in [(axes[0], "GAN", [("d_loss", "Discriminator"), ("g_loss", "Generator")], "a"),
                                     (axes[1], "DDPM", [("loss", "Denoising MSE")], "b")]:
         sub = df[df["model"] == model]
-        for (col, lab), colour in zip(cols, ["#eb6834", "#2a78d6"] if model == "GAN" else ["#2a78d6"]):
+        colour = STYLE["GAN-JCSO"][0] if model == "GAN" else STYLE["Diffusion-JCSO"][0]
+        for (col, lab), ls in zip(cols, ["--", "-"] if model == "GAN" else ["-"]):
             g = sub.groupby("epoch")[col]
             mu = g.mean().rolling(7, min_periods=1).mean()
             sd = g.std(ddof=1).rolling(7, min_periods=1).mean()
-            ax.plot(mu.index, mu.values, color=colour, label=lab)
+            ax.plot(mu.index, mu.values, color=colour, ls=ls, label=lab)
             ax.fill_between(mu.index, mu - sd, mu + sd, color=colour, alpha=0.18, lw=0)
         ax.set_xlabel("Epoch")
         ax.set_ylabel("Training loss")
@@ -240,7 +243,8 @@ def fig_b5g() -> None:
     ax.set_xticks(x, [f"{INFO_LABEL[i]}\ncapacity {c:g}" for i, c in combos])
     ax.set_ylabel("Miss rate (%)")
     ax.grid(axis="x", visible=False)
-    ax.legend(ncol=4, frameon=False, loc="upper left")
+    fig.legend(*ax.get_legend_handles_labels(), ncol=4, frameon=False, loc="upper center",
+               bbox_to_anchor=(0.5, 1.12))
     fig.tight_layout()
     save(fig, "fig_b5g_replay")
 

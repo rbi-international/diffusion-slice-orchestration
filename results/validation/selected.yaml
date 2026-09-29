@@ -1,0 +1,5 @@
+criterion: mean validation CRPS
+epochs:
+  ddpm: 1600
+  gan: 400
+  quantile_mlp: 160
