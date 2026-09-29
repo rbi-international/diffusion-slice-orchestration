@@ -1,0 +1,22 @@
+# Conda environment for Diffusion-JCSO.
+# Create:   conda env create -f environment.yml
+# Activate: conda activate dsorch
+# Then:     pip install -e . --no-deps
+#
+# Library versions are pinned so that every run uses the same numerical stack.
+# The canonical results in results/ were produced with exactly these versions
+# (CPU only, single thread per process).
+name: dsorch
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - numpy==2.4.4
+      - pandas==3.0.2
+      - scipy==1.17.1
+      - matplotlib==3.10.9
+      - pyyaml==6.0.3
+      - torch==2.14.0
+      - pytest==9.1.1

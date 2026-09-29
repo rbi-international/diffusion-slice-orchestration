@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dsorch"
+version = "0.1.0"
+description = "Diffusion-JCSO: conditional denoising diffusion for joint computation-communication slice orchestration in 5G/6G cloud-edge networks"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+  { name = "Gurpreet Singh", email = "gurpreet32@gmail.com" },
+  { name = "Rohit Bharti", email = "rohit.33572@lpu.co.in" },
+]
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=2.0",
+  "pandas>=2.0",
+  "scipy>=1.12",
+  "matplotlib>=3.8",
+  "pyyaml>=6.0",
+  "torch>=2.2",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

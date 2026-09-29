@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Diffusion-JCSO: conditional denoising diffusion for joint computation-communication slice orchestration"
+version: 0.1.0
+date-released: 2026-09-29
+license: MIT
+repository-code: "https://github.com/rbi-international/diffusion-slice-orchestration"
+authors:
+  - family-names: Singh
+    given-names: Gurpreet
+    affiliation: "School of Computer Science and Engineering, Lovely Professional University, Punjab, India"
+    email: gurpreet32@gmail.com
+  - family-names: Bharti
+    given-names: Rohit
+    affiliation: "School of Computer Science and Engineering, Lovely Professional University, Punjab, India"
+    email: rohit.33572@lpu.co.in
+    orcid: "https://orcid.org/0000-0003-1267-7257"
+references:
+  - type: article
+    title: "GAN-Assisted joint computation-communication slice orchestration for 5G/6G cloud-edge networks"
+    authors:
+      - family-names: Qiu
+        given-names: Yuanhe
+      - family-names: Zhang
+        given-names: Xihui
+    journal: "Journal of Cloud Computing"
+    year: 2026
+    doi: "10.1186/s13677-026-00985-4"

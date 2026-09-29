@@ -1,0 +1,12 @@
+# Selects the training length of each learned forecaster before any test run.
+# Fit on slots 0-79 and score CRPS on slots 80-99 (the validation window of the
+# base protocol) for five validation seeds that never appear in testing.
+extends: base.yaml
+experiment: validation
+output: results/validation
+validation:
+  workload: heavy
+  seeds: [1, 2, 5, 7, 9]
+  fit_slots: 80
+  val_end: 100
+  epoch_grid: [160, 400, 800, 1600, 3200]

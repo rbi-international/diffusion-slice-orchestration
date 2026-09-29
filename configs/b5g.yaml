@@ -1,0 +1,10 @@
+# Public B5G trace replay (three seed-selected segments, five model seeds each).
+extends: base.yaml
+experiment: b5g
+output: results/b5g
+use_selected: results/validation/selected.yaml
+grid:
+  capacity: [1.0, 0.82]
+  information: [request_observed, proactive]
+b5g:
+  model_seeds: [0, 1, 2, 3, 4]

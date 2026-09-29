@@ -1,0 +1,95 @@
+# Base configuration. Every numerical value below is taken from the GAN-JCSO
+# paper (Qiu and Zhang, J. Cloud Comput. 2026, doi:10.1186/s13677-026-00985-4)
+# unless the comment says otherwise. Experiment configs in this folder override
+# only what they change.
+
+protocol:
+  slots: 260                  # slots per trace
+  fit_slots: 100              # slots 0-99 fit the forecasters (Table 5)
+  test_start: 100             # metrics are computed on slots 100-259 only
+  seeds: [3, 11, 27, 41, 59, 73, 89, 97, 113, 131]
+  information: request_observed   # request_observed (Eq. 20) or proactive
+
+slices:                       # Table 7
+  - {name: eMBB,  deadline_ms: 6.8, weight: 0.35, base_bw: 42.0, base_cpu: 28.0, alpha: 1.35, eta: 0.20, chi_tx: 1.00, chi_edge: 1.00}
+  - {name: URLLC, deadline_ms: 2.6, weight: 0.45, base_bw: 18.0, base_cpu: 18.0, alpha: 1.30, eta: 0.35, chi_tx: 0.72, chi_edge: 0.78}
+  - {name: mMTC,  deadline_ms: 4.0, weight: 0.20, base_bw: 12.0, base_cpu: 32.0, alpha: 1.18, eta: 0.25, chi_tx: 1.00, chi_edge: 1.00}
+
+coupling:                     # Table 3, rho_ij
+  eMBB-URLLC: 0.42
+  eMBB-mMTC: 0.31
+  URLLC-mMTC: 0.36
+
+nodes:                        # Section "Slice types and workloads"
+  bw:   [122.0, 105.0, 95.0, 84.0]
+  cpu:  [118.0, 132.0, 112.0, 98.0]
+  prop_ms: [1.9, 2.6, 3.2, 4.1]   # paper states the 1.9-4.1 ms range; inner values as in the public reimplementation
+
+latency:                      # Eqs. (5)-(7), Table 3
+  tau_b: 0.42
+  nu_b: 0.014
+  tau_c: 0.55
+  nu_c: 0.020
+  lambda_b: 0.12
+  lambda_c: 0.14
+  eps: 0.001
+  penalty_mult: 2.2           # unassigned or rejected request latency = 2.2 d_s
+
+queue:                        # Eq. (8), Table 3
+  delta: 0.55
+  xi_unassigned: 0.15
+  q_max: 45.0
+
+isolation:                    # Eqs. (11), (21), (22)
+  theta: 0.52
+  admission_min_index: 0.25
+  admission_min_ratio: 0.85
+
+control:                      # Eqs. (17), (20), (21)
+  kappa: 0.18
+  beta: 0.12
+  gamma: 0.55
+  fit_scale: 2.0
+  quantile: 0.86
+  samples: 12
+  history: 5
+  blend_generator: 0.62       # 0.62 Q_q + 0.38 LWMA
+  lwma_a: 0.35                # w_i = 0.35 + 0.65 (i-1)/(k-1)
+  lwma_b: 0.65
+
+baselines:
+  independent_margin: 1.02
+  static_safety: 1.25         # not stated in the paper; fixed value from the public reimplementation
+
+workload:                     # controlled burst generator
+  burst_factors: {normal: 0.8, medium: 1.4, heavy: 2.0, extreme: 2.6}
+
+forecasters:
+  gan:                        # Table 5
+    latent_dim: 8
+    hidden: 48
+    epochs: 160
+    batch_size: 96
+    lr: 0.002
+    betas: [0.5, 0.999]
+    lambda_c: 0.25
+  ddpm:                       # this work; capacity and training budget matched to the GAN
+    steps: 20
+    schedule: cosine          # cosine | linear | linear_legacy
+    linear_beta_start: 0.0001
+    linear_beta_end: 0.35     # used only by schedule=linear
+    variance: posterior       # posterior (beta tilde) | beta
+    time_dim: 8
+    hidden: 48
+    epochs: 160
+    batch_size: 96
+    lr: 0.002
+  quantile_mlp:               # direct distributional regression control
+    hidden: 48
+    epochs: 160
+    batch_size: 96
+    lr: 0.002
+    levels: [0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.86, 0.90, 0.95]
+
+evaluation:
+  forecast_eval_samples: 200  # samples per prediction for CRPS and coverage diagnostics

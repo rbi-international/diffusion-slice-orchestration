@@ -1,0 +1,10 @@
+# Main comparison: 8 controllers x 4 burst levels x 3 capacities x 2 information
+# settings x 10 seeds.
+extends: base.yaml
+experiment: orchestration
+output: results/orchestration
+use_selected: results/validation/selected.yaml
+grid:
+  workloads: [normal, medium, heavy, extreme]
+  capacity: [1.0, 0.92, 0.82]
+  information: [request_observed, proactive]

@@ -1,0 +1,21 @@
+# Diffusion design ablations on heavy bursts at nominal capacity.
+extends: base.yaml
+experiment: ablation
+output: results/ablation
+use_selected: results/validation/selected.yaml
+grid:
+  workloads: [heavy]
+  capacity: [1.0]
+  information: [request_observed, proactive]
+ablation:
+  variants:
+    - {name: "default (cosine, K=20)", group: default}
+    - {name: "schedule linear 1e-4..0.35", group: schedule, ddpm: {schedule: linear}}
+    - {name: "schedule linear 1e-4..0.02 (legacy)", group: schedule, ddpm: {schedule: linear_legacy}}
+    - {name: "K=5", group: steps, ddpm: {steps: 5}}
+    - {name: "K=10", group: steps, ddpm: {steps: 10}}
+    - {name: "K=50", group: steps, ddpm: {steps: 50}}
+    - {name: "variance beta", group: variance, ddpm: {variance: beta}}
+    - {name: "M=64 samples", group: samples, samples: 64}
+    - {name: "M=256 samples", group: samples, samples: 256}
+    - {name: "160 epochs (GAN budget)", group: training, ddpm: {epochs: 160}}

@@ -1,0 +1,7 @@
+# Held-out forecast quality of every demand estimator (slots 100-259).
+extends: base.yaml
+experiment: forecast
+output: results/forecast
+use_selected: results/validation/selected.yaml
+grid:
+  workloads: [normal, medium, heavy, extreme]

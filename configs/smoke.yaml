@@ -1,0 +1,14 @@
+# Fast end-to-end check used by the test suite and CI (about one minute).
+extends: base.yaml
+experiment: orchestration
+output: results/scratch/smoke
+protocol:
+  seeds: [3]
+grid:
+  workloads: [heavy]
+  capacity: [1.0]
+  information: [request_observed, proactive]
+forecasters:
+  gan: {epochs: 20}
+  ddpm: {epochs: 20}
+  quantile_mlp: {epochs: 20}
