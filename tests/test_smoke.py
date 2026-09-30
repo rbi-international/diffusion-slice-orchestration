@@ -17,3 +17,23 @@ def test_smoke_orchestration(tmp_path):
     assert set(df["method"]) >= {"Diffusion-JCSO", "GAN-JCSO", "JointHeuristic"}
     assert df["miss_rate"].between(0, 100).all()
     assert df["acceptance"].between(0, 100).all()
+
+
+CALLS = []
+
+
+def _square(x):
+    CALLS.append(x)
+    return [{"x": x, "y": x * x}]
+
+
+def test_run_parallel_checkpoint_resumes(tmp_path):
+    from dsorch.experiments import run_parallel
+    jobs = [(1,), (2,), (3,)]
+    labels = ["a", "b", "c"]
+    first = run_parallel(_square, jobs, 1, tmp_path, labels)
+    (tmp_path / "b.pkl").unlink()                     # simulate a job lost to an interruption
+    CALLS.clear()
+    again = run_parallel(_square, jobs, 1, tmp_path, labels)
+    assert CALLS == [2]                               # only the missing job is recomputed
+    assert again == first

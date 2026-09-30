@@ -9,10 +9,11 @@ run in parallel processes.
 from __future__ import annotations
 
 import copy
+import pickle
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -47,28 +48,55 @@ def _init_worker() -> None:
     torch.set_num_threads(1)
 
 
-def run_parallel(fn: Callable, jobs: List[tuple], n_proc: int) -> List:
-    """Run jobs, print one progress line per finished job, return results in job order."""
+def run_parallel(fn: Callable, jobs: List[tuple], n_proc: int, checkpoint: Optional[Path] = None,
+                 labels: Optional[List[str]] = None) -> List:
+    """Run jobs, print one progress line per finished job, return results in job order.
+
+    With ``checkpoint``, each finished job's result is pickled to
+    ``checkpoint/<label>.pkl`` and reused on a rerun, so an interrupted run
+    resumes without recomputing finished jobs. Jobs are deterministic, so a
+    resumed run gives the same results as an uninterrupted one.
+    """
     t0 = time.perf_counter()
     n = len(jobs)
+    labels = labels or [str(i) for i in range(n)]
+    results: List = [None] * n
+    todo = list(range(n))
+    if checkpoint is not None:
+        checkpoint.mkdir(parents=True, exist_ok=True)
+        todo = []
+        for i, lab in enumerate(labels):
+            f = checkpoint / f"{lab}.pkl"
+            if f.exists():
+                with f.open("rb") as fh:
+                    results[i] = pickle.load(fh)
+            else:
+                todo.append(i)
+        if len(todo) < n:
+            print(f"  {fn.__name__.strip('_')}: resumed {n - len(todo)}/{n} jobs from {checkpoint}", flush=True)
 
-    def report(done: int) -> None:
+    def finish(i: int, res, done: int) -> None:
+        results[i] = res
+        if checkpoint is not None:
+            tmp = checkpoint / f"{labels[i]}.pkl.tmp"
+            with tmp.open("wb") as fh:
+                pickle.dump(res, fh)
+            tmp.replace(checkpoint / f"{labels[i]}.pkl")
         el = time.perf_counter() - t0
         print(f"  {fn.__name__.strip('_')}: {done}/{n} jobs done, {el:.0f} s elapsed", flush=True)
 
+    done = n - len(todo)
     if n_proc <= 1:
         _init_worker()
-        out = []
-        for i, j in enumerate(jobs, 1):
-            out.append(fn(*j))
-            report(i)
-        return out
-    results: List = [None] * n
+        for i in todo:
+            done += 1
+            finish(i, fn(*jobs[i]), done)
+        return results
     with ProcessPoolExecutor(max_workers=n_proc, initializer=_init_worker) as ex:
-        futures = {ex.submit(fn, *j): i for i, j in enumerate(jobs)}
-        for done, fut in enumerate(as_completed(futures), 1):
-            results[futures[fut]] = fut.result()
-            report(done)
+        futures = {ex.submit(fn, *jobs[i]): i for i in todo}
+        for fut in as_completed(futures):
+            done += 1
+            finish(futures[fut], fut.result(), done)
     return results
 
 

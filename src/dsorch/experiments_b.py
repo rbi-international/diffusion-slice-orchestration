@@ -201,12 +201,19 @@ def select_shapes(df: pd.DataFrame, budgets: List[float]) -> Dict:
     return {"selected": out, "table": pd.concat(table)}
 
 
+def checkpoint_dir(out: Path) -> Path:
+    """Per-job checkpoints (gitignored) so an interrupted run resumes; see run_parallel."""
+    root = Path(__file__).resolve().parents[2]
+    return root / "results" / "scratch" / "checkpoints" / Path(out).name
+
+
 def exp_validation_b(cfg: Dict, out: Path, n_proc: int) -> None:
     cfg = study_b_config(cfg)
     sb = cfg["study_b"]
     jobs = [(cfg, w, s) for w in sb["workloads"] for s in sb["validation_seeds"]]
     t0 = time.perf_counter()
-    df = pd.DataFrame(sum(run_parallel(_validation_job, jobs, n_proc), []))
+    labels = [f"{w}_seed{s}" for _, w, s in jobs]
+    df = pd.DataFrame(sum(run_parallel(_validation_job, jobs, n_proc, checkpoint_dir(out), labels), []))
     wall = time.perf_counter() - t0
     df.to_csv(out / "validation_b.csv", index=False)
     sel = select_shapes(df, sb["budgets"])
@@ -222,6 +229,7 @@ def exp_validation_b(cfg: Dict, out: Path, n_proc: int) -> None:
         "shapes": sel["selected"],
         "timing": {"validation_wall_seconds": round(wall, 1), "mean_job_seconds": round(per_job, 1),
                    "workers": n_proc,
+                   "note": "wall seconds cover the final invocation only if the run resumed from checkpoints; mean_job_seconds is per job",
                    "test_run_estimate_hours": round(est_job * n_test_jobs / max(n_proc, 1) / 3600, 2)},
     }
     with (out / "selected.yaml").open("w") as fh:
@@ -255,7 +263,8 @@ def exp_test_b(cfg: Dict, out: Path, n_proc: int) -> None:
     with (root / sb["selected_file"]).open() as fh:
         shapes = yaml.safe_load(fh)["shapes"]
     jobs = [(cfg, w, s, shapes) for w in sb["workloads"] for s in sb["test_seeds"]]
-    df = pd.DataFrame(sum(run_parallel(_test_job, jobs, n_proc), []))
+    labels = [f"{w}_seed{s}" for _, w, s, _ in jobs]
+    df = pd.DataFrame(sum(run_parallel(_test_job, jobs, n_proc, checkpoint_dir(out), labels), []))
     df.to_csv(out / "frontier_b.csv", index=False)
 
 
