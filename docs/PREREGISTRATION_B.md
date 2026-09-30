@@ -1,6 +1,6 @@
 # Pre-registration: uncertainty-driven reservation (study B)
 
-Status: **draft for approval** (version 3). No study-B code has been written
+Status: **draft for approval** (version 3.1). No study-B code has been written
 or run. After Rohit approves, the status line changes to "approved" in a
 commit of its own, and every later change goes in the "Amendments" section
 with its reason and date, committed before the run it affects.
@@ -22,6 +22,12 @@ Revision history:
   2.5). Also renames the recalibration step (it is not split-conformal),
   states that QuantileMLP is retrained for both rules in study B, and adds
   a run-time estimate with a pre-run coarsening rule (section 9).
+* v3.1: after the third local review (f8810fb on branch
+  b/prereg-review-v3). The base risk levels c * b_s are clipped to
+  [0.01, 0.60] **before** recalibration, and the recalibration target uses
+  the clipped values (sections 2.3, 2.4 and 5). Without this, the target
+  1 - c * b_s is negative for 12 of the 25 lever values when b_s = 1 and
+  for 7 of 25 when b_s = 0.25.
 
 ## 1. Motivation
 
@@ -76,7 +82,8 @@ With M = 200 samples, joint coverage is resolved in steps of 0.005; the
 highest QuantileMLP level, 0.995, resolves eps = 0.01 under Bonferroni. To
 give every method the same resolvable range, **every effective risk level
 (after recalibration and relaxation) is clipped to [0.01, 0.60]** for all
-methods. For every method and cell, the fraction of decisions clipped at
+methods. The base risk levels are clipped to the same range before
+recalibration (section 2.4). For every method and cell, the fraction of decisions clipped at
 0.01, clipped at 0.60, and lambda-capped is reported.
 
 ### 2.4 Validation-window recalibration
@@ -85,11 +92,12 @@ This step recalibrates coverage; it is **not** split-conformal prediction
 and no finite-sample coverage guarantee is claimed, because the correction
 is estimated on one fitted model and applied to a refitted one.
 
-For each seed and each lever value c: fit the forecaster on slots 0-79;
+For each seed and each lever value c, the base risk levels are
+eps_s = clip(c * b_s) with clip to [0.01, 0.60]. Fit the forecaster on slots 0-79;
 compute RB reservations on slots 80-99 (60 slice-slots) with risk levels
 g * eps_s for g on a grid of 41 log-spaced values in [0.1, 10]; choose the g
 whose pooled empirical joint coverage is closest to the target
-mean_s(1 - eps_s). **Ties** (equal absolute coverage error) are broken by
+mean_s(1 - eps_s), computed with the clipped eps_s. **Ties** (equal absolute coverage error) are broken by
 the smallest |log g| (least correction), then by the smaller g (more
 conservative). Then refit on slots 0-99 and use eps_s' = clip(g * eps_s) on
 the test slots.
@@ -158,8 +166,10 @@ GAN 400, QuantileMLP 160 epochs).
 * **Test seeds 1001 to 1080 (80 seeds)**, never used in study A or in any
   tuning.
 * Conditions (4): heavy and extreme bursts, capacity 1.0 and 0.82, proactive.
-* **Frontier lever.** RB: c on 25 log-spaced values in [0.05, 20] (risk
-  levels c * b_s before recalibration). Eq. (20) controllers: the target
+* **Frontier lever.** RB: c on 25 log-spaced values in [0.05, 20]; base
+  risk levels eps_s = clip(c * b_s) to [0.01, 0.60] before recalibration.
+  Lever values that give identical clipped levels for all slices give
+  identical reservations and are kept as duplicate frontier points. Eq. (20) controllers: the target
   multiplied by a scalar on 21 values in [0.6, 1.8].
 * **Budget measurement.** Over-reservation is computed on the **requested**
   reservation: for RB the level-0 target of section 2.5 (after
