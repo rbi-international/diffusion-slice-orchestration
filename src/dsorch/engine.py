@@ -69,6 +69,7 @@ def run_episode(
     lat = sm.lat
     backlog = np.zeros((S, 2))
     rows = []
+    plan_log = []
     for t in range(T):
         u = traces[t]
         u_obs = u if info == "request_observed" else traces[max(t - 1, 0)]
@@ -76,8 +77,14 @@ def run_episode(
         est = None
         if policy.uses_estimate and estimate is not None and not np.isnan(estimate[t]).any():
             est = estimate[t]
-        targets, order = policy.targets(sm, u_obs, qp, est)
-        pl = place(sm, targets, order, policy.mode)
+        if hasattr(policy, "plan"):
+            # study-B controllers (RB): targets are the requested reservations,
+            # the placement already includes any capacity-aware relaxation
+            targets, pl, extra = policy.plan(sm, t, qp)
+            plan_log.append(extra)
+        else:
+            targets, order = policy.targets(sm, u_obs, qp, est)
+            pl = place(sm, targets, order, policy.mode)
         _, gamma_t = isolation_index(pl.members, sm.rho, sm.iso["theta"])
         frag = fragmentation(pl.used, sm.nodes)
         util = utilization(pl.used, sm.nodes)
@@ -104,9 +111,12 @@ def run_episode(
                  (not admitted) or total > spec.deadline_ms, gamma_t, frag, util, qp[s])
             )
             backlog[s] = update_backlog(backlog[s], u[s], a, admitted, sm.queue)
-    return pd.DataFrame(
+    df = pd.DataFrame(
         rows,
         columns=["slot", "slice", "u_bw", "u_cpu", "tgt_bw", "tgt_cpu", "a_bw", "a_cpu", "node",
                  "admitted", "latency_ms", "l_tx", "l_edge", "l_queue", "l_iso", "deadline_ms",
                  "miss", "isolation", "fragmentation", "utilization", "queue_pressure"],
     )
+    if plan_log:
+        df.attrs["plan_log"] = plan_log
+    return df

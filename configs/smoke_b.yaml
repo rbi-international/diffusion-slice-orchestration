@@ -1,0 +1,15 @@
+# Fast end-to-end check of the study-B pipeline (not a result).
+extends: validation_b.yaml
+experiment: validation_b
+output: results/scratch/smoke_b
+use_selected: null
+forecasters:
+  gan: {epochs: 20}
+  ddpm: {epochs: 20}
+  quantile_mlp: {epochs: 20}
+study_b:
+  scale_lever: [0.6, 1.8, 3]
+  rb_c_grid: [0.05, 0.2]
+  shapes: [[1.0, 1.0, 1.0], [1.0, 0.25, 0.5]]
+  workloads: [heavy]
+  validation_seeds: [1]

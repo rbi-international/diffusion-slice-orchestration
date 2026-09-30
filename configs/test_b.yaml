@@ -1,0 +1,4 @@
+# Study B, section 5: test run on seeds 1001-1080 (run once).
+extends: validation_b.yaml
+experiment: test_b
+output: results/study_b

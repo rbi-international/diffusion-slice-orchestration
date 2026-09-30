@@ -23,6 +23,9 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from dsorch.config import load_config  # noqa: E402
 from dsorch.experiments import EXPERIMENTS, apply_selected  # noqa: E402
+from dsorch.experiments_b import EXPERIMENTS_B  # noqa: E402
+
+EXPERIMENTS = {**EXPERIMENTS, **EXPERIMENTS_B}
 from dsorch.repro import write_manifest  # noqa: E402
 
 
