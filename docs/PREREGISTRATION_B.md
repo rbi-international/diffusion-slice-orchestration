@@ -297,3 +297,61 @@ than its frontier lever.
 **Cost.** Tuning: 30 candidates x 21 scale values x 2 capacities x 3
 methods per job, about 35 minutes on 2 cores. Test run unchanged at about
 2 hours.
+
+**Recalibration and the scale lever (condition A2 of the local review,
+4a4c046).** Recalibration (section 2.4) targets a coverage, which has no
+meaning for a scaled reservation. It is therefore computed on the unscaled
+reservations r(eps) only, once per seed and candidate (c, b), and the scale
+s is applied afterwards to every ladder level. The selected g, and hence
+eps_s', do not depend on s.
+
+**Reachability evidence under the amended lever (condition A1).** Command
+`python scripts/reachability_b.py --jobs 2`, run from commit 4b28b3c
+(clean tree; manifest in
+`results/validation_b/reachability_manifest/manifest.json`), validation
+seeds only. Outputs, committed with this text:
+`results/validation_b/reachability_endpoints.csv` (over-reservation at
+s = 0.6 and s = 1.8 for all 30 candidates of each RB method and the three
+Eq. (20) controllers, 20 seed-conditions), `reachability_fullgrid.csv` (all
+21 values of s, seed 1, heavy bursts) and `reachability_summary.csv`.
+Results:
+
+* Over-reservation is non-decreasing in s for 186 of 186 frontiers on the
+  full grid, so s = 0.6 and s = 1.8 bound each frontier.
+* Diffusion-JCSO, GAN-JCSO, QuantileMLP-JCSO, and every one of the 30
+  candidates of Diffusion-RB and of GAN-RB reach 30, 40 and 50 percent in
+  20 of 20 seed-conditions.
+* QuantileMLP-RB: 23 of 30 candidates reach all three budgets in 20 of 20;
+  5 reach 30 percent in 19 of 20; 2 (c = 0.02 with b = (1, 0.25, 0.5) and
+  b = (0.75, 0.25, 0.5)) reach 30 percent in 17 of 20, because even s = 0.6
+  reserves more than 30 percent there.
+* Section 4 admits only candidates that reach all 60 validation points, so
+  the selected candidate of every method reaches every budget in 20 of 20
+  validation seed-conditions by construction; 23 QuantileMLP-RB candidates
+  and all 30 of each generator are eligible.
+
+**What was run and seen before this amendment (condition A3).**
+
+* The reachability script above stores only the columns method, rule,
+  model, candidate, c, shape, lever, capacity, over_reservation, workload
+  and seed; the code asserts that no other column is stored, and nothing
+  else is printed.
+* The first reachability check behind the "Reason" paragraph was an
+  uncommitted scratch script (risk lever c in {0.01, 0.02, 0.05, 1.0},
+  shapes (1,1,1) and (0.75,0.25,0.5), same validation seeds). It wrote a
+  miss-rate column to a scratch file, but only over-reservation summaries
+  were printed or read; the scratch file is not used anywhere.
+* Before that, a pipeline smoke test (20 training epochs, validation seed 1,
+  heavy bursts, 5 lever values) printed miss rates of those throwaway
+  models once, to check that the code ran. These models are not the study
+  models (1600, 400 and 160 epochs), and no design choice used their
+  outcomes.
+* No study model outcome on any seed, and nothing on any test seed, has
+  been computed or seen.
+
+**Notes (non-blocking items of the local review).** Under the amendment RB
+no longer controls each slice's realized risk level: it shapes the
+reservation from the forecast distribution at a tuned risk level and then
+scales it; the manuscript describes it that way. Of the 30 candidates (c,
+b), 29 give distinct clipped base-level vectors (two coincide after the
+0.01 floor); the tuning report states the number of distinct candidates.
