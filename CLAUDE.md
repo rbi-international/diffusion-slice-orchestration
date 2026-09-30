@@ -50,7 +50,7 @@ Rohit for it if you need to check an equation.
 6. **Writing style** (docs, comments, and especially manuscript text):
    * Never use the em dash character (U+2014). Use commas, parentheses,
      colons or separate sentences. Check before every commit:
-     `grep -rn $'—' --include='*.md' --include='*.py' --include='*.yaml' .`
+     `python scripts/check_style.py`
    * Formal research prose for anything that may enter the paper. No
      marketing tone, no filler, no "delve", "crucial", "seamless",
      "comprehensive", "robust" as praise, "In conclusion".
