@@ -1,9 +1,11 @@
 # Pre-registration: uncertainty-driven reservation (study B)
 
-Status: **draft for approval** (version 3.1). No study-B code has been written
-or run. After Rohit approves, the status line changes to "approved" in a
-commit of its own, and every later change goes in the "Amendments" section
-with its reason and date, committed before the run it affects.
+Status: **approved** (version 3.1, text as of commit 93184d3, main at
+8514090). Approved by Rohit Bharti (corresponding author) on 2026-09-30,
+after two independent local reviews and the local confirmation of fix R1.
+No study-B code had been written or run at approval. Every later change
+goes in the "Amendments" section with its reason and date, committed before
+the run it affects.
 
 Revision history:
 

@@ -6,18 +6,21 @@ bottom. Claim open tasks with `[local]` or `[cloud]` before starting.
 
 ## Open tasks
 
-- [ ] Rohit: approve `docs/PREREGISTRATION_B.md` (blocks all study-B work).
+- [x] Rohit: approve `docs/PREREGISTRATION_B.md` (approved v3.1, 2026-09-30).
 - [x] [local] Independent review of PREREGISTRATION_B v2 (verdict in the log, 2026-09-30).
 - [x] [cloud] Resolve review items B1-B6 in PREREGISTRATION_B (version 3, a500906).
 - [x] [local] Re-check B1-B6 against v3 (verdict in the log, 2026-09-30).
-- [ ] [cloud] One-line fix R1 (clip eps_s = c * b_s before recalibration), then Rohit approves.
+- [x] [cloud] One-line fix R1 (v3.1, 93184d3); confirmed by local review.
 - [ ] [local] Review of the RB code; local rerun of the RB validation step (check only; the cloud selection is official).
-- [ ] [cloud] Implement rule RB (`src/dsorch/policies.py` or a new `reservation.py`):
-      joint risk target from samples, Bonferroni variant for QuantileMLP,
-      split-conformal calibration, capacity-aware relaxation. Tests first.
-- [ ] Validation run of RB on seeds 1, 2, 5, 7, 9 to select eps_s; record
-      the selection in `results/validation_b/selected.yaml`.
-- [ ] Study-B experiment config and frontier runs on the test seeds (once).
+- [ ] [cloud] Implement rule RB (new `src/dsorch/reservation.py`) exactly as
+      PREREGISTRATION_B v3.1 section 2: joint risk target from samples,
+      Bonferroni variant for QuantileMLP, validation-window recalibration,
+      capacity-aware relaxation ladder. Tests first.
+- [ ] [cloud] Validation run of RB on seeds 1, 2, 5, 7, 9 (section 4); commit
+      `results/validation_b/selected.yaml` and the measured run time before
+      the test run.
+- [ ] [cloud] Study-B test run on seeds 1001-1080 (once), analysis per sections 5-6.
+- [ ] [local] Windows rerun of the study-B test run for the cross-platform check (section 8).
 - [ ] Find why 5-8 non-learned baseline rows differ between Linux and
       Windows (suspected float ties at the 0.85 admission threshold).
 - [ ] Per-method cross-platform stability table (needs Rohit's
@@ -165,3 +168,12 @@ recalibration". `scripts/check_style.py` passes on v3.
 
 Next: cloud applies R1 in the approval commit or a v3.1; local confirms the
 line; Rohit sets the status to approved.
+
+### 2026-09-30 (cloud)
+Rohit approved PREREGISTRATION_B version 3.1 (text as of 93184d3, main at
+8514090). R1 confirmed by local review before approval. Status line set to
+approved; no study-B code existed at approval. RB task renamed to
+"validation-window recalibration" to match the pre-registration. CLAUDE.md
+section 8 updated to the new workflow: Rohit pushes to GitHub (public), the
+cloud reads GitHub directly and returns bundles that fast-forward `main`.
+Next: cloud implements RB (tests first).

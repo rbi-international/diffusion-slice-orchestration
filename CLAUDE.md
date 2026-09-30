@@ -165,11 +165,22 @@ access) and Claude Code on his laptop (this repository).
 * Claim a task in the WORKLOG "Open tasks" list (`[local]` or `[cloud]`)
   before starting it, so both do not work on the same thing.
 * Work on a branch per task (`b/<short-name>`), merge to `main` only when
-  tests pass. Rohit pushes to GitHub.
-* Moving work between instances: the sender runs
-  `git bundle create ../handoff.bundle main` and Rohit passes the file on;
-  the receiver runs `git fetch <path>/handoff.bundle main` and merges
-  (`git merge --ff-only FETCH_HEAD` when possible).
+  tests pass. Only Rohit pushes to GitHub
+  (https://github.com/rbi-international/diffusion-slice-orchestration, public).
+* **Laptop to cloud:** Rohit pushes `main`; the cloud session reads it from
+  GitHub directly (`git fetch origin main`). No bundle is needed.
+* **Cloud to laptop:** the cloud session always starts from the latest
+  GitHub `main`, commits on top of it, and sends a bundle. Rohit applies it
+  with `git fetch <path>/<file>.bundle main` and
+  `git merge --ff-only FETCH_HEAD`, then pushes.
+* **One line of history.** While the cloud session has a task in progress
+  (claimed `[cloud]` in the WORKLOG and not yet delivered), do not push new
+  commits to `main`; keep local work on a branch and merge it after the
+  cloud bundle has been applied. If a push is unavoidable, tell the cloud
+  session so it re-reads GitHub and rebuilds on top before bundling.
+  Otherwise its bundle will not fast-forward.
+* Never commit anything under `data/external/` (third-party data); the repo
+  is public.
 * Independent checking is welcome: if one instance produced a result, the
   other may re-derive it from the code and CSVs and record agreement or
   disagreement in the WORKLOG.
