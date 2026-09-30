@@ -14,12 +14,12 @@ bottom. Claim open tasks with `[local]` or `[cloud]` before starting.
 - [x] [local] Review of Amendment 1 (verdict in the log, 2026-09-30).
 - [x] [cloud] Amendment 1 conditions A1-A3 (968d6b0).
 - [x] [local] Re-check A1-A3 against 968d6b0 (verdict in the log, 2026-09-30): all PASS.
-- [ ] Rohit: approve Amendment 1 (blocks the tuning run).
+- [x] Rohit: approve Amendment 1 (approved 2026-09-30 as of 968d6b0).
 - [ ] [local] Review of the RB code; local rerun of the RB validation step (check only; the cloud selection is official).
-- [ ] [cloud] Implement rule RB (new `src/dsorch/reservation.py`) exactly as
-      PREREGISTRATION_B v3.1 section 2: joint risk target from samples,
-      Bonferroni variant for QuantileMLP, validation-window recalibration,
-      capacity-aware relaxation ladder. Tests first.
+- [x] [cloud] Implement rule RB (`src/dsorch/reservation.py`) per
+      PREREGISTRATION_B v3.1 section 2 and Amendment 1 (4b28b3c).
+- [x] [cloud] Pre-specified analysis of sections 5-6 (`src/dsorch/analysis_b.py`,
+      `scripts/analyze_b.py`), tested on synthetic frontiers before any test run.
 - [ ] [cloud] Validation run of RB on seeds 1, 2, 5, 7, 9 (section 4); commit
       `results/validation_b/selected.yaml` and the measured run time before
       the test run.
@@ -315,3 +315,14 @@ Non-blocking notes:
 
 Next: Rohit approves Amendment 1; cloud runs the validation (tuning) step
 and commits `results/validation_b/selected.yaml` with the measured run time.
+
+## 2026-09-30 (cloud): Amendment 1 approved; analysis code committed
+
+Rohit approved Amendment 1 as of 968d6b0 after the local re-check
+(1091399). The pre-specified analysis (`analysis_b.py`, per-cell paired
+tests with Holm per hypothesis, the section 6 decision rule, seed-level
+bootstrap with seed 20260930) is committed with its synthetic-data tests
+before any tuning or test-seed run. Tests: 49 passed; style check passes.
+Local note for Methods: QuantileMLP expected shortfall is flat beyond the
+0.05 and 0.995 grid ends. Next: tuning on validation seeds.
+

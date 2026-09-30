@@ -253,7 +253,7 @@ amendment committed **before** the test run, never after it.
 
 ## Amendments
 
-### Amendment 1 (proposed 2026-09-30; not yet approved; no test seed run)
+### Amendment 1 (proposed 2026-09-30; approved by Rohit Bharti 2026-09-30 as of commit 968d6b0, after the local re-check 1091399; approved before any tuning or test-seed run)
 
 **Reason.** Before the tuning run, the reachable over-reservation range of
 every controller was measured on the validation seeds only (1, 2, 5, 7, 9;
