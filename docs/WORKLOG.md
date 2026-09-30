@@ -11,6 +11,8 @@ bottom. Claim open tasks with `[local]` or `[cloud]` before starting.
 - [x] [cloud] Resolve review items B1-B6 in PREREGISTRATION_B (version 3, a500906).
 - [x] [local] Re-check B1-B6 against v3 (verdict in the log, 2026-09-30).
 - [x] [cloud] One-line fix R1 (v3.1, 93184d3); confirmed by local review.
+- [x] [local] Review of Amendment 1 (verdict in the log, 2026-09-30).
+- [ ] [cloud] Amendment 1 conditions A1-A3, then Rohit approves Amendment 1 (blocks the tuning run).
 - [ ] [local] Review of the RB code; local rerun of the RB validation step (check only; the cloud selection is official).
 - [ ] [cloud] Implement rule RB (new `src/dsorch/reservation.py`) exactly as
       PREREGISTRATION_B v3.1 section 2: joint risk target from samples,
@@ -189,3 +191,60 @@ PREREGISTRATION_B (scale lever for RB, risk level tuned). Miss rates were
 not inspected for this decision. No test seed has been run. Needs local
 review and Rohit's approval before the tuning run.
 
+### 2026-09-30 (local)
+Review of Amendment 1 to PREREGISTRATION_B (ca7aa52).
+
+**Verdict: accept in principle; not ready for approval until A1-A3 are
+met.** The reason is legitimate and the timing is correct: the problem was
+found on validation seeds, from over-reservation only, before tuning and
+before any test seed. As approved, section 5 would exclude every cell, so
+every hypothesis would be "not supported" whatever the controllers do. The
+fix is also an improvement in its own right: both rules are now traced by
+the same scale lever, which removes a lever asymmetry present in v3.1.
+
+Context checked locally (study A, `results/frontier/frontier.csv`,
+proactive, scale lever 0.70-1.60, M = 12): the Eq. (20) controllers reached
+the 30/40/50 percent budgets in 95-100 percent of seed-conditions (GAN-JCSO
+lowest, 0.95 at 30 and 40; its highest per-seed minimum over-reservation
+was 47 percent). So the shortfall comes from the RB side, as the amendment
+states, and lowering the Eq. (20) grid to 0.6 is useful margin. I could not
+check the RB reachability figures: they come from code on
+b/rb-implementation, which has not been delivered.
+
+Conditions before approval:
+
+- **A1. Commit the evidence, for both levers.** A script and a CSV with
+  over-reservation only (min and max per controller and validation
+  seed-condition; no miss-rate columns), covering (a) the c lever as
+  approved, which reproduces the figures in the Reason, and (b) the
+  proposed s lever for all six controllers at M = 200, for at least the
+  extreme candidates of the tuning grid (c = 0.02 and c = 0.4, all six
+  shapes). The amendment must show that 30/40/50 percent is reached by all
+  six controllers in at least 18 of 20 validation seed-conditions (the
+  90 percent of section 5). Otherwise the same failure could return and
+  need an Amendment 2. The tuning eligibility rule protects the RB side only
+  for the selected (c, b), not the Eq. (20) side.
+- **A2. Recalibration is independent of s.** State that the recalibration
+  of section 2.4 is computed on the unscaled reservation (s = 1), so g
+  depends on the seed and (c, b) only, and s then multiplies the
+  recalibrated ladder. A coverage target of 1 - eps is meaningless on a
+  scaled reservation.
+- **A3. "Miss rates were not inspected".** This cannot be verified if the
+  smoke run printed miss rates. Record in the amendment exactly what was
+  run (commit of b/rb-implementation, command, output columns), so the
+  claim is checkable.
+
+Non-blocking:
+
+- With a common scale lever, eps no longer sets a risk budget; RB becomes a
+  distribution-shaped reservation with a global scale, and recalibration
+  only matters for how the reservation is shared across slices and slots.
+  The amendment says this. The manuscript should describe RB the same way
+  and not claim calibrated per-slice risk control.
+- In the tuning grid, c * b_s < 0.01 clips to 0.01 (for example c = 0.02,
+  b_s = 0.25 or 0.5), so some of the 30 candidates are identical. This is
+  harmless (identical candidates give identical results), but report the
+  number of distinct candidates.
+
+Next: cloud adds A1-A3 to Amendment 1; local re-checks A1-A3 only; Rohit
+approves Amendment 1 before the tuning run.
