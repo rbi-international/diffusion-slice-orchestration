@@ -1,0 +1,35 @@
+preregistration: docs/PREREGISTRATION_B.md v3.1 (93184d3)
+criterion: mean miss rate over budgets 30/40/50 percent, 5 seeds x 4 conditions (section
+  4, Amendment 1)
+shapes:
+  Diffusion-RB:
+    c: 0.4
+    shape:
+    - 1.0
+    - 0.25
+    - 1.0
+    objective: 19.302898699830262
+    selection_rule: eligible (all points reached)
+  GAN-RB:
+    c: 0.1
+    shape:
+    - 1.0
+    - 0.25
+    - 0.5
+    objective: 24.791525973292195
+    selection_rule: eligible (all points reached)
+  QuantileMLP-RB:
+    c: 0.4
+    shape:
+    - 1.0
+    - 0.25
+    - 1.0
+    objective: 17.68558751911826
+    selection_rule: eligible (all points reached)
+timing:
+  validation_wall_seconds: 3478.6
+  mean_job_seconds: 645.0
+  workers: 2
+  note: wall seconds cover the final invocation only if the run resumed from checkpoints;
+    mean_job_seconds is per job
+  test_run_estimate_hours: 1.67
