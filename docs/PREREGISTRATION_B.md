@@ -253,4 +253,47 @@ amendment committed **before** the test run, never after it.
 
 ## Amendments
 
-(none)
+### Amendment 1 (proposed 2026-09-30; not yet approved; no test seed run)
+
+**Reason.** Before the tuning run, the reachable over-reservation range of
+every controller was measured on the validation seeds only (1, 2, 5, 7, 9;
+heavy and extreme; capacity 1.0 and 0.82; 20 seed-conditions), with the
+study-A training lengths. Miss rates were not inspected for this decision.
+With the risk lever alone, RB spans only a narrow band of over-reservation,
+because eps is confined to [0.01, 0.60]: at the most conservative setting
+(eps = 0.01) the maximum over-reservation was 24 to 44 percent for
+Diffusion-RB, 17 to 80 percent for GAN-RB and 37 to 108 percent for
+QuantileMLP-RB across seed-conditions. The budgets 30, 40 and 50 percent
+were reached by all six controllers in 6, 4 and fewer than 4 of the 20
+seed-conditions; no budget from 10 to 40 percent was reached in more than
+15 of 20 (75 percent). Under section 5 (72 of 80 seeds required), every
+cell would be excluded and every hypothesis would be "not supported" by
+construction, independently of the controllers' performance.
+
+**Change.**
+
+1. *Frontier lever for RB* (replaces the c lever of section 5). The RB
+   reservation at every ladder level is multiplied by a scalar s on the same
+   grid as the Eq. (20) controllers: 21 values in [0.6, 1.8]. The requested
+   target is s * r(eps_s,0) * (1 + kappa * Q) and the budget is measured on
+   it (section 5, "Budget measurement", otherwise unchanged). Relaxation
+   (section 2.5) moves along the scaled ladder s * r(eps_s,k).
+2. *Risk level fixed per method by tuning* (extends section 4). Base levels
+   eps_s = clip(c * b_s) with (c, b) chosen jointly on the validation seeds
+   from c in {0.02, 0.05, 0.1, 0.2, 0.4} and the six shapes of section 4
+   (30 candidates per method). Recalibration (section 2.4) is applied at the
+   selected (c, b) exactly as before. The objective, tie-break and
+   eligibility rule of section 4 are unchanged, evaluated on the s frontier.
+3. *Unchanged:* budgets 30, 40 and 50 percent; hypotheses H1 to H4; decision
+   rule; Holm families; test seeds 1001 to 1080; M = 200; eps range
+   [0.01, 0.60]; missing-seed rule; recalibration; relaxation rules.
+
+**Consequence for interpretation.** Both rules are now traced by the
+identical scale lever, so a matched-budget comparison contrasts how each
+rule and forecaster distributes the same total reservation across slots
+and slices. The risk level becomes a tuned shape parameter of RB rather
+than its frontier lever.
+
+**Cost.** Tuning: 30 candidates x 21 scale values x 2 capacities x 3
+methods per job, about 35 minutes on 2 cores. Test run unchanged at about
+2 hours.

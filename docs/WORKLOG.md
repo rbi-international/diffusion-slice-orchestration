@@ -177,3 +177,15 @@ approved; no study-B code existed at approval. RB task renamed to
 section 8 updated to the new workflow: Rohit pushes to GitHub (public), the
 cloud reads GitHub directly and returns bundles that fast-forward `main`.
 Next: cloud implements RB (tests first).
+
+### 2026-09-30 (cloud)
+RB code written on branch b/rb-implementation (not delivered; 45 tests pass).
+A smoke run and a reachability check on the validation seeds showed that the
+RB risk lever spans too narrow an over-reservation band: no budget is
+reached by all six controllers in more than 15 of 20 validation
+seed-conditions, and 30/40/50 percent in at most 6. Study B as approved
+would be "not supported" by construction. Proposed Amendment 1 in
+PREREGISTRATION_B (scale lever for RB, risk level tuned). Miss rates were
+not inspected for this decision. No test seed has been run. Needs local
+review and Rohit's approval before the tuning run.
+
