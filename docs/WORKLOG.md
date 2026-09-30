@@ -6,9 +6,11 @@ bottom. Claim open tasks with `[local]` or `[cloud]` before starting.
 
 ## Open tasks
 
-- [ ] Rohit: approve `docs/PREREGISTRATION_B.md` version 2 (blocks all study-B work).
+- [ ] Rohit: approve `docs/PREREGISTRATION_B.md` (blocks all study-B work).
 - [x] [local] Independent review of PREREGISTRATION_B v2 (verdict in the log, 2026-09-30).
-- [ ] [cloud] Resolve review items B1-B6 in PREREGISTRATION_B (version 3) before approval.
+- [x] [cloud] Resolve review items B1-B6 in PREREGISTRATION_B (version 3, a500906).
+- [x] [local] Re-check B1-B6 against v3 (verdict in the log, 2026-09-30).
+- [ ] [cloud] One-line fix R1 (clip eps_s = c * b_s before recalibration), then Rohit approves.
 - [ ] [local] Review of the RB code; local rerun of the RB validation step (check only; the cloud selection is official).
 - [ ] [cloud] Implement rule RB (`src/dsorch/policies.py` or a new `reservation.py`):
       joint risk target from samples, Bonferroni variant for QuantileMLP,
@@ -116,3 +118,50 @@ Non-blocking notes:
 
 Next: cloud revises to version 3; local re-checks B1-B6 only, then Rohit
 approves.
+
+### 2026-09-30 (local)
+Re-check of B1-B6 only, against PREREGISTRATION_B version 3 (a500906).
+
+**Verdict: B1, B2, B3, B5 and B6 resolved. B4 resolved except one residual
+(R1), a one-line fix. Approve once R1 is fixed; no further review round is
+needed beyond confirming that line.**
+
+- **B1 resolved** (section 5). Budget is measured on the requested level-0
+  target, before relaxation; Eq. (20) on its target before capping. This
+  matches `metrics.py:28`. Realized ratio reported as secondary.
+- **B2 resolved** (section 3). Diffusion-JCSO and GAN-JCSO use M = 200;
+  QuantileMLP-JCSO uses the same retrained model as QuantileMLP-RB.
+- **B3 resolved** (section 2.4). Tie rule: smallest |log g|, then smaller
+  g; the 41-point grid contains g = 1 exactly (checked). Clip is reapplied
+  (eps_s' = clip(g * eps_s)). Implementation note: compare coverage as
+  integer counts out of 60, not floats, so ties are exact.
+- **B4 resolved, with residual R1** (section 2.3). Common range [0.01, 0.60]
+  is resolvable by both model types (0.99 = 198/200 samples; Bonferroni
+  0.995 is the top QuantileMLP level); lambda-capped and clipped fractions
+  are reported.
+  **R1:** v2 clipped the base level eps_s = c * b_s; v3 dropped that clip
+  and clips only effective levels. The recalibration target
+  mean_s(1 - eps_s) then uses unclipped eps_s, which exceeds 1 (a negative
+  target coverage) for 12 of the 25 lever values when b_s = 1, 10 of 25
+  when b_s = 0.5, and 7 of 25 when b_s = 0.25 (checked on the stated grid).
+  The g selected at those lever values is then arbitrary, and it affects the
+  other slices through the pooled target. Fix: in sections 2.4 and 5, define
+  eps_s = clip(c * b_s) to [0.01, 0.60] before recalibration and use the
+  clipped values in the target.
+- **B5 resolved** (sections 4, 5, 6). Seeds must reach the budget for every
+  controller in the comparison (2 for H1-H3, 4 for H4); tuning requires all
+  60 points, with a stated fallback; excluded cells count toward neither
+  side of the decision rule.
+- **B6 resolved** (section 2.5). Ladder eps_s' * 1.5^k, k = 0..11, clipped
+  and merged; queue correction at every level; trigger, choice (smallest
+  increase in unit-free expected shortfall), deadline-based tie-break,
+  12-step stop and fallback are all specified. The tie-break order (eMBB,
+  mMTC, URLLC) is the reverse of the deadline order in `configs/base.yaml`,
+  as intended.
+
+Outside B1-B6 (not reviewed in depth): the open task for the RB code still
+says "split-conformal calibration"; v3 renamed the step "validation-window
+recalibration". `scripts/check_style.py` passes on v3.
+
+Next: cloud applies R1 in the approval commit or a v3.1; local confirms the
+line; Rohit sets the status to approved.
