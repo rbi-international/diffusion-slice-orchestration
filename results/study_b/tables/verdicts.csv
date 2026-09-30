@@ -1,0 +1,5 @@
+hypothesis,claim,cells_analysed,cells_excluded,cells_sig_predicted,cells_sig_opposite,verdict,mean_diff_pp,boot_ci_low,boot_ci_high
+H1,Diffusion-RB < GAN-RB,12,0,0,0,not supported,1.9036681812379932,-1.5246344947384298,5.812924793630909
+H2,Diffusion-RB < QuantileMLP-RB,12,0,0,12,contradicted,6.450287263031089,3.3789961657914307,10.050849053576007
+H3,Diffusion-RB < Diffusion-JCSO,12,0,4,1,not supported,-2.0910627983641414,-2.9575469719837257,-1.182837467608155
+H4,(Diffusion-RB - Diffusion-JCSO) - (GAN-RB - GAN-JCSO) < 0,12,0,0,0,not supported,-2.519711085936911,-4.153268696322697,-0.9363963631282547

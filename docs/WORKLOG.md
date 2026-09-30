@@ -20,10 +20,8 @@ bottom. Claim open tasks with `[local]` or `[cloud]` before starting.
       PREREGISTRATION_B v3.1 section 2 and Amendment 1 (4b28b3c).
 - [x] [cloud] Pre-specified analysis of sections 5-6 (`src/dsorch/analysis_b.py`,
       `scripts/analyze_b.py`), tested on synthetic frontiers before any test run.
-- [ ] [cloud] Validation run of RB on seeds 1, 2, 5, 7, 9 (section 4); commit
-      `results/validation_b/selected.yaml` and the measured run time before
-      the test run.
-- [ ] [cloud] Study-B test run on seeds 1001-1080 (once), analysis per sections 5-6.
+- [x] [cloud] Validation run of RB on seeds 1, 2, 5, 7, 9 (07f690c, 58 min).
+- [x] [cloud] Study-B test run on seeds 1001-1080 (once, 54 min), analysis per sections 5-6.
 - [ ] [local] Windows rerun of the study-B test run for the cross-platform check (section 8).
 - [ ] Find why 5-8 non-learned baseline rows differ between Linux and
       Windows (suspected float ties at the 0.85 admission threshold).
@@ -325,4 +323,25 @@ bootstrap with seed 20260930) is committed with its synthetic-data tests
 before any tuning or test-seed run. Tests: 49 passed; style check passes.
 Local note for Methods: QuantileMLP expected shortfall is flat beyond the
 0.05 and 0.995 grid ends. Next: tuning on validation seeds.
+
+## 2026-09-30 (cloud): study B tuning and test run
+
+First tuning launch was lost when the cloud container restarted while idle
+(no job had finished; nothing written). Added resumable per-job checkpoints
+(51f1009, gitignored under results/scratch/checkpoints) and reran.
+
+Tuning (validation seeds only, 07f690c): Diffusion-RB c = 0.4, b = (1, 0.25, 1);
+GAN-RB c = 0.1, b = (1, 0.25, 0.5); QuantileMLP-RB c = 0.4, b = (1, 0.25, 1).
+Two of three selections sit at the top of the c grid (report as a threat to
+validity; grid kept as registered).
+
+Test run (seeds 1001-1080, run once, config test_b.yaml): 160 jobs, 3230 s,
+2 workers. Analysis by `scripts/analyze_b.py` unchanged since fb6fb99.
+Verdicts (section 6): H1 not supported (Diffusion-RB minus GAN-RB +1.9 pp,
+95% CI -1.5 to 5.8; no cell significant). H2 contradicted (QuantileMLP-RB
+better than Diffusion-RB in 12 of 12 cells, +6.5 pp). H3 not supported
+(RB lowers Diffusion miss rate by 2.1 pp, CI -3.0 to -1.2; 4 cells
+significant in the predicted direction at capacity 1.0 and budgets 30/40,
+1 cell opposite). H4 not supported by the cell rule (-2.5 pp, CI -4.2 to
+-0.9; no cell significant). All 12 cells analysed for every hypothesis.
 
