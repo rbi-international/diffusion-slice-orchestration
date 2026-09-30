@@ -7,7 +7,9 @@ bottom. Claim open tasks with `[local]` or `[cloud]` before starting.
 ## Open tasks
 
 - [ ] Rohit: approve `docs/PREREGISTRATION_B.md` version 2 (blocks all study-B work).
-- [ ] [local] Independent review of PREREGISTRATION_B v2, then of the RB code; local rerun of the RB validation step (check only; the cloud selection is official).
+- [x] [local] Independent review of PREREGISTRATION_B v2 (verdict in the log, 2026-09-30).
+- [ ] [cloud] Resolve review items B1-B6 in PREREGISTRATION_B (version 3) before approval.
+- [ ] [local] Review of the RB code; local rerun of the RB validation step (check only; the cloud selection is official).
 - [ ] [cloud] Implement rule RB (`src/dsorch/policies.py` or a new `reservation.py`):
       joint risk target from samples, Bonferroni variant for QuantileMLP,
       split-conformal calibration, capacity-aware relaxation. Tests first.
@@ -48,3 +50,69 @@ detect about 13 pp, 80 seeds about 3.7 pp. Adopted 80 fresh test seeds
 (1001-1080), per-hypothesis Holm families, "no cell significant in the
 opposite direction" rule, H4 as per-seed difference-in-differences,
 per-method tuning with a stated objective, explicit missing-budget rule.
+
+### 2026-09-30 (local)
+Independent review of PREREGISTRATION_B version 2 (commit af9e38e).
+
+**Verdict: not ready for approval; minor revision required.** The design is
+sound and every point of the earlier review is addressed. Six specification
+gaps remain (B1-B6). Each leaves a choice to the implementer that can move
+the primary outcome, so each must be fixed before approval, not by
+amendment after the code exists.
+
+Checked against the study-A CSVs (`results/frontier/matched_budget.csv`,
+`results/tables/matched_budget_tests.csv`), all confirmed exactly:
+QuantileMLP-JCSO lower mean miss than Diffusion-JCSO in 16/16 proactive
+scale-lever cells (the earlier local review said 24; 16 is correct);
+0/24 proactive Diffusion-vs-GAN rows Holm-significant; paired SD median
+8.80 pp, range 1.94-17.92, lower quartile 5.52; minimum detectable
+difference at alpha/12, 80 percent power (noncentral t): 13.4 pp with 10
+seeds, 3.75 pp (median SD) and 2.35 pp (lower quartile) with 80 seeds.
+`scripts/check_style.py` passes.
+
+Blocking items:
+
+- **B1. Over-reservation under relaxation.** `metrics.py:28` measures
+  over-reservation on the target `tgt`. State whether RB's target is taken
+  before or after capacity-aware relaxation (section 2, step 5).
+  Post-relaxation lowers RB's measured budget whenever capacity binds,
+  which moves every matched-budget cell.
+- **B2. Sample count confounds H3 and H4.** RB uses M = 200; the JCSO
+  comparators keep M = 12. In study A, M = 256 alone lowered Diffusion-JCSO
+  proactive miss from 10.46 to 9.46 percent (heavy, capacity 1.0). H3 then
+  credits RB with a sampling effect. Fix: run Diffusion-JCSO and GAN-JCSO
+  with M = 200 for H3 and H4 (keep M = 12 as a study-A reference only), or
+  restate H3 as "RB with M = 200 vs Eq. (20) with M = 12".
+- **B3. Calibration multiplier ties.** Coverage pooled over 60 slice-slots
+  moves in steps of 1/60, so many of the 41 values of g give the same
+  coverage. Give a tie rule (for example the smallest g, the most
+  conservative), and say whether the [0.002, 0.60] clip is reapplied to
+  g * eps_s.
+- **B4. Levels outside the resolvable range.** QuantileMLP: 1 - eps/2 >
+  0.995 whenever eps < 0.01, and `quantile_at` (`np.interp`) then returns
+  the 0.995 quantile silently. Generators: eps below 1/M = 0.005 cannot be
+  resolved with 200 samples, and lambda = 6 may not reach 1 - eps. State
+  the rule for both (clamp, and report how often it happens).
+- **B5. Missing seeds in paired tests and in tuning.** The 72-of-80 rule
+  should count seeds present for both methods (H1-H3) or all four
+  (H4). The validation objective (mean miss over budgets 30/40/50 on 5
+  seeds) needs the same rule for budgets a validation seed does not reach.
+- **B6. Relaxation ladder.** Specify the 12 ladder levels, the order of
+  relaxation and queue correction (step 6), and a deterministic tie-break.
+  "Reduces the penalty least" should read "increases the expected
+  shortfall penalty least".
+
+Non-blocking notes:
+
+- Calibrating g on the slots 0-79 model and applying it to a model refit on
+  0-99 is not split conformal (no coverage guarantee). Either keep the 0-79
+  model for the test slots or call the step "calibration" rather than
+  "split-conformal".
+- QuantileMLP-RB uses a retrained model (extended level grid), so it is not
+  the study-A QuantileMLP. State this next to H2.
+- Give a run-time estimate before the test run: 80 seeds x 2 workloads x 3
+  learned models x 2 fits (0-79 and 0-99), with DDPM at 1600 epochs. The
+  Windows rerun of the test runs (section 8) is about 4 times slower.
+
+Next: cloud revises to version 3; local re-checks B1-B6 only, then Rohit
+approves.
