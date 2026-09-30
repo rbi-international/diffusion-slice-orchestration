@@ -12,7 +12,9 @@ bottom. Claim open tasks with `[local]` or `[cloud]` before starting.
 - [x] [local] Re-check B1-B6 against v3 (verdict in the log, 2026-09-30).
 - [x] [cloud] One-line fix R1 (v3.1, 93184d3); confirmed by local review.
 - [x] [local] Review of Amendment 1 (verdict in the log, 2026-09-30).
-- [ ] [cloud] Amendment 1 conditions A1-A3, then Rohit approves Amendment 1 (blocks the tuning run).
+- [x] [cloud] Amendment 1 conditions A1-A3 (968d6b0).
+- [x] [local] Re-check A1-A3 against 968d6b0 (verdict in the log, 2026-09-30): all PASS.
+- [ ] Rohit: approve Amendment 1 (blocks the tuning run).
 - [ ] [local] Review of the RB code; local rerun of the RB validation step (check only; the cloud selection is official).
 - [ ] [cloud] Implement rule RB (new `src/dsorch/reservation.py`) exactly as
       PREREGISTRATION_B v3.1 section 2: joint risk target from samples,
@@ -248,3 +250,68 @@ Non-blocking:
 
 Next: cloud adds A1-A3 to Amendment 1; local re-checks A1-A3 only; Rohit
 approves Amendment 1 before the tuning run.
+
+### 2026-09-30 (local)
+Re-check of Amendment 1 conditions A1-A3 against the committed files at
+968d6b0 (GitHub main 52a1168; the only change after 968d6b0 is the previous
+WORKLOG entry). No study-B tuning or test run was started.
+
+**Verdict: A1 PASS, A2 PASS, A3 PASS. No new blocking issue. Amendment 1
+is ready for Rohit's approval.**
+
+- **A1 PASS.** All four files exist in `results/validation_b/`. The manifest
+  (`reachability_manifest/manifest.json`) records commit 4b28b3c,
+  `dirty: false`, command `scripts/reachability_b.py --jobs 2`. Recomputed
+  from the CSVs: `reachability_fullgrid.csv` holds 186 frontiers x 21 values
+  of s (3906 rows), all 186 non-decreasing in s. `reachability_endpoints.csv`
+  (3720 rows = 93 frontiers x 20 seed-conditions x 2 endpoints): the three
+  Eq. (20) controllers and all 30 candidates of Diffusion-RB and of GAN-RB
+  reach 30/40/50 percent in 20 of 20 seed-conditions; QuantileMLP-RB 23 of
+  30 candidates at 20/20, 5 reach 30 percent in 19/20, and 2 (c = 0.02,
+  b = (1,0.25,0.5) and (0.75,0.25,0.5)) in 17/20; the failures are only at
+  30 percent, where even s = 0.6 reserves 32-36 percent. The committed
+  `reachability_summary.csv` agrees with the recomputation on all 93 rows.
+  Only seeds 1, 2, 5, 7, 9 appear.
+- **A2 PASS.** `recalibrate` (`src/dsorch/reservation.py:133-151`) takes no
+  scale argument and clips the base levels (R1). `rb_setup`
+  (`src/dsorch/experiments_b.py:84-90`) runs recalibration and
+  `build_ladders` once per seed and candidate; `rb_frontier`
+  (`experiments_b.py:100-103`) calls it before the loop over s. The scale is
+  applied to every ladder level in `RBPolicy.plan`
+  (`reservation.py:230-231`), which returns the requested level-0 target
+  (`reservation.py:233, 256`), so the budget is measured before relaxation.
+  g does not depend on s.
+- **A3 PASS.** `scripts/reachability_b.py:59` asserts each row's keys equal
+  `REACH_COLUMNS` (`experiments_b.py:108`) before `workload` and `seed` are
+  added, so the stored columns are exactly method, rule, model, candidate,
+  c, shape, lever, capacity, over_reservation, workload, seed (the CSV
+  headers and the manifest's `stored_columns` agree). The script prints
+  only reach counts, monotonicity and the number of distinct candidates.
+  Committed `results/` files added since approval are the four reachability
+  files only; none has a miss-rate column (the manifest's only "miss"
+  matches are in "admission"), and no committed CSV contains a seed in
+  1001-1080. `tests/test_reservation.py` uses synthetic data only.
+- **Section 4 eligibility.** `select_shapes` (`experiments_b.py:177-201`)
+  counts interpolated points per candidate over workload x seed x capacity
+  x budget (60) and selects among candidates with all 60 reached; the
+  fallback follows section 4. Checked with a synthetic frame: a candidate
+  with a better objective but 59 of 60 points was rejected in favour of a
+  worse one with 60 of 60.
+- `python -m pytest`: 46 passed (14.5 s, Windows, dsorch env).
+  `python scripts/check_style.py`: passes.
+
+Non-blocking notes:
+
+- Monotonicity in s was verified on one of the 20 seed-conditions only.
+  This does not weaken A1: `frontier_points` uses the minimum and maximum
+  over the whole grid, which contain the s = 0.6 and s = 1.8 values, so the
+  endpoint reach counts are lower bounds.
+- `QuantileBank._interp` (`reservation.py:90-98`) is flat beyond the grid
+  ends (0.05 and 0.995), so the QuantileMLP expected shortfall used to order
+  relaxation steps ignores the extreme tails. It affects only which slice is
+  relaxed first, for QuantileMLP-RB; worth a sentence in Methods.
+- The column guard is an `assert`, which `python -O` would skip. Harmless for
+  the committed run.
+
+Next: Rohit approves Amendment 1; cloud runs the validation (tuning) step
+and commits `results/validation_b/selected.yaml` with the measured run time.
