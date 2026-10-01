@@ -16,7 +16,7 @@ bottom. Claim open tasks with `[local]` or `[cloud]` before starting.
 - [x] [local] Re-check A1-A3 against 968d6b0 (verdict in the log, 2026-09-30): all PASS.
 - [x] Rohit: approve Amendment 1 (approved 2026-09-30 as of 968d6b0).
 - [x] [local] Review of the RB code against PREREGISTRATION_B sections 2-5 (log, 2026-10-01). Local validation rerun dropped by Rohit: the cloud selection is official and GAN results are platform-sensitive.
-- [ ] [cloud] RB code review follow-ups F1-F5 (F1 before any rerun; F2-F5 in Methods or tables).
+- [x] [cloud] RB code review follow-ups F1-F5: F1 fixed in code (b3784fe); F2-F5 stated in the manuscript (log, 2026-10-01).
 - [x] [cloud] Implement rule RB (`src/dsorch/reservation.py`) per
       PREREGISTRATION_B v3.1 section 2 and Amendment 1 (4b28b3c).
 - [x] [cloud] Pre-specified analysis of sections 5-6 (`src/dsorch/analysis_b.py`,
@@ -28,8 +28,9 @@ bottom. Claim open tasks with `[local]` or `[cloud]` before starting.
       Windows (suspected float ties at the 0.85 admission threshold).
 - [ ] Per-method cross-platform stability table (needs Rohit's
       `results/verify/orchestration/orchestration.csv`).
-- [ ] Manuscript (after study B): Scientific Reports format, Word,
-      Introduction / Results / Discussion / Methods, at most 8 display items.
+- [ ] [cloud] Manuscript (after study B): Scientific Reports format, Word and
+      LaTeX (sn-jnl), at most 8 display items. Draft complete; awaiting the
+      authors' final edits. Kept out of the public repository.
 
 ## Log
 
@@ -500,3 +501,20 @@ Findings:
 Still open from the Amendment 1 review: QuantileMLP shortfall is flat
 beyond the grid ends 0.05 and 0.995 (`reservation.py:90-98`), so it affects
 only the relaxation order for QuantileMLP-RB.
+
+### 2026-10-01 (cloud): RB code review follow-ups F1-F5
+- F1: `run_experiment.py` now records `study_b_config(cfg)` (proactive,
+  15-level QuantileMLP grid) in study-B manifests; test runs smoke_b and
+  checks the manifest. The committed manifests are left as the original
+  record; `scripts/effective_config_b.py` writes `effective_config.json`
+  next to each (both show proactive and 15 levels). No rerun needed.
+- F2: Methods states that the relaxation order uses the unscaled
+  reservations, independent of the frontier scale and the queue correction.
+- F3: realized joint coverage is reported as coverage of the unscaled
+  level-0 reservation (s = 1, before queue correction).
+- F4: inference times are reported from the published-rule controllers
+  (same 200 samples); the text says they were not recorded for RB rows.
+- F5: clipping is defined next to the numbers (slice-slot decisions whose
+  effective level fell outside [0.01, 0.60]); GAN-RB maximum 67% per
+  frontier setting is reported.
+
