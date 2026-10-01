@@ -24,6 +24,10 @@ bottom. Claim open tasks with `[local]` or `[cloud]` before starting.
 - [x] [cloud] Validation run of RB on seeds 1, 2, 5, 7, 9 (07f690c, 58 min).
 - [x] [cloud] Study-B test run on seeds 1001-1080 (once, 54 min), analysis per sections 5-6.
 - [x] [local] Windows rerun of the study-B test run for the cross-platform check (section 8); no verdict changes (log, 2026-10-01).
+- [ ] [local] Exploratory public-trace replay of the six study-B controllers:
+      `python scripts/run_experiment.py configs/b5g_b.yaml --jobs 8`, then
+      `python scripts/analyze_b5g_b.py`; commit `results/b5g_b` (needs
+      `data/external/public_b5g_trace.csv`, which stays uncommitted).
 - [ ] Find why 5-8 non-learned baseline rows differ between Linux and
       Windows (suspected float ties at the 0.85 admission threshold).
 - [ ] Per-method cross-platform stability table (needs Rohit's
@@ -517,4 +521,17 @@ only the relaxation order for QuantileMLP-RB.
 - F5: clipping is defined next to the numbers (slice-slot decisions whose
   effective level fell outside [0.01, 0.60]); GAN-RB maximum 67% per
   frontier setting is reported.
+
+### 2026-10-01 (cloud): public-trace replay prepared (exploratory)
+Reviewers will ask whether the study-B ranking holds on real traffic; all
+study-B evidence is synthetic. Added experiment `b5g_b`: the six controllers
+on the three public-trace segments x 10 model seeds (2001-2010), RB settings
+frozen from `results/validation_b/selected.yaml` (nothing tuned on the
+trace), scale lever widened to 41 values in [0.4, 2.4] so the budgets are
+reachable, fixed before any run. Analysis `scripts/analyze_b5g_b.py`:
+budgets 30/40/50, 2 capacities, H1-H4 and E1, E3, E4 contrasts over pairs
+(segment, model seed), Holm over 6 cells, a cell analysed only if 90% of
+pairs reach the budget, per-segment means and sign agreement reported. Not
+pre-registered; reported as exploratory. Tested end to end on a stand-in
+file with the trace's columns (`DSORCH_B5G_TRACE` overrides the path).
 

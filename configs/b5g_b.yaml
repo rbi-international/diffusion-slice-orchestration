@@ -1,0 +1,12 @@
+# Exploratory (not pre-registered): the six study-B controllers on the public
+# B5G trace (three segments, data/external/public_b5g_trace.csv, not committed).
+# RB settings are those frozen by the validation run (results/validation_b);
+# nothing is tuned on the public trace. Ten model seeds per segment.
+extends: test_b.yaml
+experiment: b5g_b
+output: results/b5g_b
+study_b:
+  # wider and finer than the synthetic test (0.6-1.8, 21 values), fixed before
+  # any run, so that the budgets are reachable on an unfamiliar trace
+  scale_lever: [0.4, 2.4, 41]
+  b5g_model_seeds: [2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010]

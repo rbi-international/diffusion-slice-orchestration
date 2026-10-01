@@ -58,9 +58,13 @@ def _fit(cfg, name, traces, n_fit, seed):
     return build(name, cfg).fit(traces[:n_fit], seed)
 
 
-def prepare(cfg: Dict, workload: str, seed: int) -> Dict:
-    """Traces, fitted models and predictive banks for one job."""
-    traces = make_trace(cfg, workload, seed)
+def prepare(cfg: Dict, workload: str, seed: int, trace_seed: int | None = None) -> Dict:
+    """Traces, fitted models and predictive banks for one job.
+
+    ``trace_seed`` selects the trace (for the public trace, the segment) when it
+    differs from the seed that drives model fitting and sampling.
+    """
+    traces = make_trace(cfg, workload, seed if trace_seed is None else trace_seed)
     sb = cfg["study_b"]
     M = int(sb["samples"])
     k = int(cfg["control"]["history"])
@@ -301,4 +305,46 @@ def frontier_points(df: pd.DataFrame, budgets: List[float], keys: List[str]) -> 
     return pd.DataFrame(rows)
 
 
-EXPERIMENTS_B = {"validation_b": exp_validation_b, "test_b": exp_test_b}
+# ---------------------------------------------------------------------------
+# Exploratory (not pre-registered): public-trace replay of the six controllers
+# ---------------------------------------------------------------------------
+
+def _b5g_b_job(cfg: Dict, segment: int, model_seed: int, shapes: Dict) -> List[Dict]:
+    """One public-trace segment and one model seed: frontiers of all six controllers.
+
+    The RB settings are the ones frozen by the validation run on synthetic
+    traces; nothing is tuned on the public trace. ``seed`` encodes the pair
+    (segment, model seed) so that the matched-budget analysis can pair runs.
+    """
+    t0 = time.perf_counter()
+    prep = prepare(cfg, "b5g", model_seed, trace_seed=segment)
+    prep["seed"] = model_seed
+    sb = cfg["study_b"]
+    tag = {"workload": "b5g", "segment": segment, "model_seed": model_seed, "seed": segment * 10000 + model_seed}
+    rows = []
+    for name in MODELS:
+        sel = shapes[f"{MODELS[name]}-RB"]
+        rows += [{**tag, **r} for r in rb_frontier(cfg, prep, name, sel["shape"], sel["c"], scale_grid(sb), sb["capacity"])]
+    rows += [{**tag, **r} for r in jcso_frontier(cfg, prep, sb["capacity"])]
+    for r in rows:
+        r["job_seconds"] = time.perf_counter() - t0
+    return rows
+
+
+def exp_b5g_b(cfg: Dict, out: Path, n_proc: int) -> None:
+    from .workload import b5g_available, b5g_segments
+
+    if not b5g_available():
+        raise FileNotFoundError("data/external/public_b5g_trace.csv is missing; see data/README.md")
+    cfg = study_b_config(cfg)
+    sb = cfg["study_b"]
+    root = Path(__file__).resolve().parents[2]
+    with (root / sb["selected_file"]).open() as fh:
+        shapes = yaml.safe_load(fh)["shapes"]
+    jobs = [(cfg, seg, ms, shapes) for seg in b5g_segments() for ms in sb["b5g_model_seeds"]]
+    labels = [f"segment{seg}_seed{ms}" for _, seg, ms, _ in jobs]
+    df = pd.DataFrame(sum(run_parallel(_b5g_b_job, jobs, n_proc, checkpoint_dir(out), labels), []))
+    df.to_csv(out / "frontier_b5g_b.csv", index=False)
+
+
+EXPERIMENTS_B = {"validation_b": exp_validation_b, "test_b": exp_test_b, "b5g_b": exp_b5g_b}

@@ -60,3 +60,32 @@ def test_study_b_manifest_records_effective_settings(tmp_path):
     cfg = json.loads((out / "manifest.json").read_text())["config"]
     assert cfg["protocol"]["information"] == "proactive"
     assert 0.995 in cfg["forecasters"]["quantile_mlp"]["levels"]
+
+
+def test_b5g_b_pipeline_on_standin_trace(tmp_path, monkeypatch):
+    """End to end on a stand-in file with the public trace's columns (not real data)."""
+    import subprocess
+    import sys
+    from pathlib import Path
+    import pandas as pd
+    from dsorch.config import load_config
+    from dsorch.system import SystemModel
+    from dsorch.workload import controlled_trace
+    root = Path(__file__).resolve().parents[1]
+    sm = SystemModel.from_config(load_config(root / "configs" / "base.yaml"))
+    rows = []
+    for seg in (3, 11):
+        tr = controlled_trace(sm.slices, 260, 2.0, seg)
+        for s, spec in enumerate(sm.slices):
+            for t in range(260):
+                rows.append((seg, t, "mIoT" if spec.name == "mMTC" else spec.name, tr[t, s, 0], tr[t, s, 1]))
+    trace = tmp_path / "trace.csv"
+    pd.DataFrame(rows, columns=["seed", "slot", "slice", "bw_demand", "cpu_demand"]).to_csv(trace, index=False)
+    out = tmp_path / "b5g_b"
+    env = {**__import__("os").environ, "DSORCH_B5G_TRACE": str(trace)}
+    subprocess.run([sys.executable, str(root / "scripts" / "run_experiment.py"), str(root / "configs" / "smoke_b5g_b.yaml"),
+                    "--jobs", "1", "--out", str(out)], check=True, capture_output=True, env=env)
+    subprocess.run([sys.executable, str(root / "scripts" / "analyze_b5g_b.py"), str(out)], check=True, capture_output=True)
+    f = pd.read_csv(out / "frontier_b5g_b.csv")
+    assert set(f["segment"]) == {3, 11} and f["method"].nunique() == 6
+    assert (out / "SUMMARY_B5G_B.md").exists()

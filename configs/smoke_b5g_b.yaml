@@ -1,0 +1,11 @@
+# Fast end-to-end check of the public-trace replay pipeline (not a result).
+extends: b5g_b.yaml
+output: results/scratch/smoke_b5g_b
+use_selected: null
+forecasters:
+  gan: {epochs: 20}
+  ddpm: {epochs: 20}
+  quantile_mlp: {epochs: 20}
+study_b:
+  scale_lever: [0.6, 1.8, 5]
+  b5g_model_seeds: [2001]

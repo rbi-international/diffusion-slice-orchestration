@@ -46,17 +46,24 @@ def controlled_trace(
     return traces
 
 
-def b5g_available(path: Path = B5G_DEFAULT) -> bool:
-    return Path(path).exists()
+def b5g_path(path: Path | None = None) -> Path:
+    """The public trace file; DSORCH_B5G_TRACE overrides the default location (used by tests)."""
+    import os
+
+    return Path(path) if path is not None else Path(os.environ.get("DSORCH_B5G_TRACE", B5G_DEFAULT))
 
 
-def b5g_segments(path: Path = B5G_DEFAULT) -> List[int]:
-    df = pd.read_csv(path, usecols=["seed"])
+def b5g_available(path: Path | None = None) -> bool:
+    return b5g_path(path).exists()
+
+
+def b5g_segments(path: Path | None = None) -> List[int]:
+    df = pd.read_csv(b5g_path(path), usecols=["seed"])
     return sorted(int(s) for s in df["seed"].unique())
 
 
 def b5g_trace(
-    slices: Sequence[SliceSpec], segment: int, slots: int = 260, path: Path = B5G_DEFAULT
+    slices: Sequence[SliceSpec], segment: int, slots: int = 260, path: Path | None = None
 ) -> np.ndarray:
     """Return the (slots, S, 2) replay tensor for one seed-selected trace segment.
 
@@ -64,6 +71,7 @@ def b5g_trace(
     label mIoT to mMTC. Its fitting-window statistics were frozen before the
     held-out slots were produced (see data/README.md).
     """
+    path = b5g_path(path)
     df = pd.read_csv(path)
     df["slice"] = df["slice"].replace({"mIoT": "mMTC"})
     seg = df[df["seed"] == segment]
