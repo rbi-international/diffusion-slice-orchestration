@@ -202,9 +202,19 @@ def select_shapes(df: pd.DataFrame, budgets: List[float]) -> Dict:
 
 
 def checkpoint_dir(out: Path) -> Path:
-    """Per-job checkpoints (gitignored) so an interrupted run resumes; see run_parallel."""
+    """Per-job checkpoints (gitignored) so an interrupted run resumes; see run_parallel.
+
+    The folder is keyed on the full output path, so a verification run
+    (e.g. results/verify/study_b) never shares checkpoints with the official
+    run (results/study_b).
+    """
     root = Path(__file__).resolve().parents[2]
-    return root / "results" / "scratch" / "checkpoints" / Path(out).name
+    out = Path(out).resolve()
+    try:
+        rel = out.relative_to(root)
+    except ValueError:
+        rel = Path(*out.parts[1:])
+    return root / "results" / "scratch" / "checkpoints" / "__".join(rel.parts)
 
 
 def exp_validation_b(cfg: Dict, out: Path, n_proc: int) -> None:

@@ -37,3 +37,12 @@ def test_run_parallel_checkpoint_resumes(tmp_path):
     again = run_parallel(_square, jobs, 1, tmp_path, labels)
     assert CALLS == [2]                               # only the missing job is recomputed
     assert again == first
+
+
+def test_checkpoint_dirs_differ_for_official_and_verify_runs():
+    from pathlib import Path
+    from dsorch.experiments_b import checkpoint_dir
+    root = Path(__file__).resolve().parents[1]
+    a = checkpoint_dir(root / "results" / "study_b")
+    b = checkpoint_dir(root / "results" / "verify" / "study_b")
+    assert a != b and a.name == "results__study_b" and b.name == "results__verify__study_b"
