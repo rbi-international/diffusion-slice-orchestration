@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from dsorch.config import load_config  # noqa: E402
 from dsorch.experiments import EXPERIMENTS, apply_selected  # noqa: E402
-from dsorch.experiments_b import EXPERIMENTS_B  # noqa: E402
+from dsorch.experiments_b import EXPERIMENTS_B, study_b_config  # noqa: E402
 
 EXPERIMENTS = {**EXPERIMENTS, **EXPERIMENTS_B}
 from dsorch.repro import write_manifest  # noqa: E402
@@ -49,7 +49,10 @@ def main() -> None:
     t0 = time.time()
     EXPERIMENTS[kind](cfg, out, args.jobs)
     elapsed = time.time() - t0
-    write_manifest(out, cfg, {"experiment": kind, "wall_seconds": round(elapsed, 1)})
+    # study B applies its own settings inside the experiment (proactive information,
+    # extended QuantileMLP grid); record the configuration that was actually used
+    used = study_b_config(cfg) if kind in EXPERIMENTS_B else cfg
+    write_manifest(out, used, {"experiment": kind, "wall_seconds": round(elapsed, 1)})
     print(f"[{kind}] done in {elapsed:.1f} s", flush=True)
 
 

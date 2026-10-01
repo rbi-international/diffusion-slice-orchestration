@@ -46,3 +46,17 @@ def test_checkpoint_dirs_differ_for_official_and_verify_runs():
     a = checkpoint_dir(root / "results" / "study_b")
     b = checkpoint_dir(root / "results" / "verify" / "study_b")
     assert a != b and a.name == "results__study_b" and b.name == "results__verify__study_b"
+
+
+def test_study_b_manifest_records_effective_settings(tmp_path):
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    out = tmp_path / "smoke_b"
+    subprocess.run([sys.executable, str(root / "scripts" / "run_experiment.py"), str(root / "configs" / "smoke_b.yaml"),
+                    "--jobs", "1", "--out", str(out)], check=True, capture_output=True)
+    cfg = json.loads((out / "manifest.json").read_text())["config"]
+    assert cfg["protocol"]["information"] == "proactive"
+    assert 0.995 in cfg["forecasters"]["quantile_mlp"]["levels"]
