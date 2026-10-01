@@ -535,3 +535,45 @@ pairs reach the budget, per-segment means and sign agreement reported. Not
 pre-registered; reported as exploratory. Tested end to end on a stand-in
 file with the trace's columns (`DSORCH_B5G_TRACE` overrides the path).
 
+### 2026-10-01 (local)
+Exploratory public-trace replay `b5g_b` (not pre-registered), from fb3945d
+with the design as committed there; no config, budget or setting changed.
+`data/external/public_b5g_trace.csv` present and git-ignored; not committed
+(output has no demand columns; manifest does not reference the file).
+`python -m pytest`: 53 passed. `python scripts/run_experiment.py
+configs/b5g_b.yaml --jobs 8` (Windows, 8 workers): 30 jobs (3 segments x
+10 model seeds), 999 s (16.6 min). Then `python scripts/analyze_b5g_b.py`.
+
+Mean miss rate (%) at matched over-reservation:
+
+| capacity | budget | Diffusion-RB | GAN-RB | QuantileMLP-RB | Diffusion-JCSO | GAN-JCSO | QuantileMLP-JCSO |
+|---|---|---|---|---|---|---|---|
+| 0.82 | 30 | 80.9 | 82.9 | 82.4 | 89.0 | 89.6 | 88.2 |
+| 0.82 | 40 | 73.6 | 74.5 | 75.7 | 77.5 | 78.7 | 76.6 |
+| 0.82 | 50 | 66.8 | 67.7 | 68.3 | 68.7 | 70.0 | 69.2 |
+| 1.00 | 30 | 85.2 | 90.6 | 89.7 | 93.0 | 94.4 | 93.0 |
+| 1.00 | 40 | 73.6 | 77.5 | 76.5 | 86.4 | 87.0 | 84.7 |
+| 1.00 | 50 | 63.8 | 67.8 | 67.6 | 72.9 | 73.2 | 70.6 |
+
+Budgets not reached, reported as they are: GAN-RB reaches 30 percent in
+26/30 (capacity 0.82) and 25/30 (1.0) pairs, 40 percent in 27/30, 50
+percent in 29/30; GAN-JCSO reaches 30 percent in 29/30. With the 90 percent
+rule (27 pairs), the 30 percent cells of H1, H4 and E3 are not analysed.
+All other controllers reach every budget in 30/30.
+
+Contrasts (Holm over 6 cells each; first minus second, negative favours the
+first): H3 (Diffusion-RB vs Diffusion-JCSO) significant in 6/6 cells,
+-1.9 to -12.8 pp; H2 (Diffusion-RB vs QuantileMLP-RB) significant in 5/6,
+-1.5 to -4.5 pp, the opposite direction to the synthetic test; H1 significant
+in 2/4 analysed cells (capacity 1.0, budgets 40 and 50, about -4 pp);
+E1 (QuantileMLP-RB vs QuantileMLP-JCSO) significant in 4/6; H4, E3, E4
+significant in none.
+
+Points for the write-up (facts, not a change to the analysis):
+
+- Absolute miss rates are 64 to 94 percent at these budgets, so every
+  contrast compares controllers that miss most deadlines on this trace.
+- The 30 pairs come from 3 trace segments; pairs within a segment share the
+  trace, so the pooled paired p-values treat model seeds as independent
+  replicates. The per-segment column `segments_same_sign` (of 3) is the
+  trace-level evidence: H3 3/3 in 5 cells, H2 3/3 in 5 cells.
