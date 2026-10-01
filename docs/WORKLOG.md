@@ -396,3 +396,18 @@ folder by the last part of `--out`, so this verify run and the official
 output share `results/scratch/checkpoints/study_b`. A later official run on
 this machine would silently resume from the verify checkpoints. Clear that
 folder before any official rerun here, or key it on the full output path.
+
+### 2026-10-01 (cloud)
+- Fixed the checkpoint collision reported in the cross-platform entry:
+  `checkpoint_dir` now keys on the full output path
+  (`results__study_b` vs `results__verify__study_b`); test added. The old
+  `results/scratch/checkpoints/study_b` folder is no longer read by any
+  run and can be deleted.
+- Added figure and analysis scripts used by the manuscript:
+  `scripts/figure_style.py`, `make_figure1.py` (overview figure),
+  `make_figures_b.py`, `exploratory_b.py` (five non-pre-registered
+  contrasts, labelled exploratory), `sensitivity_b.py` (Wilcoxon
+  signed-rank sensitivity: same four verdicts). Figures are written as
+  PDF, EPS, 600 dpi PNG and TIFF.
+- Manuscript (Scientific Reports, task 4) is drafted in the cloud session;
+  it is kept out of this public repository until the authors decide.
