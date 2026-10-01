@@ -577,3 +577,18 @@ Points for the write-up (facts, not a change to the analysis):
   trace, so the pooled paired p-values treat model seeds as independent
   replicates. The per-segment column `segments_same_sign` (of 3) is the
   trace-level evidence: H3 3/3 in 5 cells, H2 3/3 in 5 cells.
+
+### 2026-10-01 (cloud): public-trace replay written up
+- Read d205a03. At the pre-specified budgets every controller misses 64-94%
+  of deadlines on the public trace. Added `scripts/describe_b5g_b.py`
+  (post hoc, descriptive, no tests): miss rates at 60-200% over-reservation
+  (`results/b5g_b/tables/descriptive_budgets.csv`) and Figure 5
+  (`results/figures/fig_b5g_b_frontiers.*`). At 150-200% the published-rule
+  controllers reach 0.2-3.8% (capacity 1.0) and 8.4-12.2% (0.82), within
+  about 3 pp of each other, Diffusion-JCSO lowest by 0.4-0.9 pp; the RB
+  controllers stay above them and Diffusion-RB levels off at 22-25%
+  (capacity 1.0). The RB settings tuned on synthetic traffic do not
+  transfer to this trace at service-relevant budgets.
+- Manuscript reframed accordingly (title: diffusion forecasts do not
+  consistently improve slice reservation at matched budgets). Kept out of
+  this repository.
