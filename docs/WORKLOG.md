@@ -22,7 +22,7 @@ bottom. Claim open tasks with `[local]` or `[cloud]` before starting.
       `scripts/analyze_b.py`), tested on synthetic frontiers before any test run.
 - [x] [cloud] Validation run of RB on seeds 1, 2, 5, 7, 9 (07f690c, 58 min).
 - [x] [cloud] Study-B test run on seeds 1001-1080 (once, 54 min), analysis per sections 5-6.
-- [ ] [local] Windows rerun of the study-B test run for the cross-platform check (section 8).
+- [x] [local] Windows rerun of the study-B test run for the cross-platform check (section 8); no verdict changes (log, 2026-10-01).
 - [ ] Find why 5-8 non-learned baseline rows differ between Linux and
       Windows (suspected float ties at the 0.85 admission threshold).
 - [ ] Per-method cross-platform stability table (needs Rohit's
@@ -345,3 +345,54 @@ significant in the predicted direction at capacity 1.0 and budgets 30/40,
 1 cell opposite). H4 not supported by the cell rule (-2.5 pp, CI -4.2 to
 -0.9; no cell significant). All 12 cells analysed for every hypothesis.
 
+### 2026-10-01 (local)
+Cross-platform check of study B (PREREGISTRATION_B section 8), from 88e1166
+(clean tree). Check only: `results/study_b` and `results/validation_b` were
+not modified (index hashes identical before and after).
+
+Run: `python scripts/run_experiment.py configs/test_b.yaml --jobs 4 --out
+results/verify/study_b`, Windows 11, torch 2.14.0+cpu, Python 3.11.16:
+160 jobs, 5770 s (1 h 36 min); official cloud run (Linux, 2 workers):
+3230 s. Then `python scripts/analyze_b.py results/verify/study_b`.
+`compare_runs.py` keys do not fit `frontier_b.csv` (no `information`
+column, no lever); compared directly on workload, seed, method, lever,
+capacity (40320 of 40320 rows matched).
+
+**Verdicts: 4 of 4 agree; no hypothesis changes verdict.**
+
+| | official (Linux) | Windows rerun |
+|---|---|---|
+| H1 | not supported, 1.90 pp [-1.52, 5.81] | not supported, 1.18 pp [-2.52, 5.27] |
+| H2 | contradicted (12/12 opposite), 6.45 [3.38, 10.05] | contradicted (12/12 opposite), 6.50 [3.42, 10.11] |
+| H3 | not supported (4 predicted, 1 opposite), -2.09 [-2.96, -1.18] | identical to two decimals |
+| H4 | not supported (0 predicted), -2.52 [-4.15, -0.94] | not supported (1 predicted), -3.23 [-5.13, -1.35] |
+
+Per-cell mean_diff sign agreement: H1 8/12, H2 12/12, H3 12/12, H4 12/12.
+The four H1 sign flips are all non-significant cells with |mean_diff| below
+1.4 pp in both runs. Holm significance status agrees in 47/48 cells; the
+exception is H4 extreme, capacity 1.0, budget 30 (p_holm 0.062 official,
+0.004 rerun), which leaves H4 at 1 of the 6 cells needed. Excluded seeds
+differ by one in two cells (76 vs 75, 78 vs 79); no cell is excluded in
+either run.
+
+Per method (cell means of miss rate, 12 cells each; rerun minus official):
+
+- **Diffusion-RB, Diffusion-JCSO:** miss rate identical in every frontier
+  row; over-reservation differs by at most 0.13 and 0.49 pp per row.
+  Cell means unchanged.
+- **QuantileMLP-RB, QuantileMLP-JCSO:** max cell-mean difference 0.23 and
+  0.18 pp; no cell over 1 pp.
+- **GAN-JCSO:** max 1.49 pp (heavy, 1.0, budget 30); 1 cell over 1 pp.
+- **GAN-RB:** max 2.08 pp (extreme, 1.0, budget 30); 6 of 12 cells over
+  1 pp, mean shift +0.63 pp. Row level: 78 percent of GAN-RB rows and
+  55 percent of GAN-JCSO rows differ by more than 0.5 pp.
+
+Flagged (more than 1 pp): GAN-RB (6 cells) and GAN-JCSO (1 cell). As in
+the study-A rerun, the GAN rows are the platform-sensitive ones; this moves
+H1 and H4 estimates by 0.7 pp but no verdict.
+
+Note: `checkpoint_dir` (`src/dsorch/experiments_b.py:204-207`) names the
+folder by the last part of `--out`, so this verify run and the official
+output share `results/scratch/checkpoints/study_b`. A later official run on
+this machine would silently resume from the verify checkpoints. Clear that
+folder before any official rerun here, or key it on the full output path.
