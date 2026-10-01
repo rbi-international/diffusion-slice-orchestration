@@ -15,7 +15,8 @@ bottom. Claim open tasks with `[local]` or `[cloud]` before starting.
 - [x] [cloud] Amendment 1 conditions A1-A3 (968d6b0).
 - [x] [local] Re-check A1-A3 against 968d6b0 (verdict in the log, 2026-09-30): all PASS.
 - [x] Rohit: approve Amendment 1 (approved 2026-09-30 as of 968d6b0).
-- [ ] [local] Review of the RB code; local rerun of the RB validation step (check only; the cloud selection is official).
+- [x] [local] Review of the RB code against PREREGISTRATION_B sections 2-5 (log, 2026-10-01). Local validation rerun dropped by Rohit: the cloud selection is official and GAN results are platform-sensitive.
+- [ ] [cloud] RB code review follow-ups F1-F5 (F1 before any rerun; F2-F5 in Methods or tables).
 - [x] [cloud] Implement rule RB (`src/dsorch/reservation.py`) per
       PREREGISTRATION_B v3.1 section 2 and Amendment 1 (4b28b3c).
 - [x] [cloud] Pre-specified analysis of sections 5-6 (`src/dsorch/analysis_b.py`,
@@ -411,3 +412,91 @@ folder before any official rerun here, or key it on the full output path.
   PDF, EPS, 600 dpi PNG and TIFF.
 - Manuscript (Scientific Reports, task 4) is drafted in the cloud session;
   it is kept out of this public repository until the authors decide.
+
+### 2026-10-01 (local)
+Code review of rule RB: `src/dsorch/reservation.py` and
+`src/dsorch/experiments_b.py` read in full at 608ffd6 against
+PREREGISTRATION_B sections 2-5 and Amendment 1. Also read the code they
+call (`engine.py`, `metrics.orchestration_metrics`, forecaster sampling,
+`QuantileMLP`) and the section 5 seed rule in `analysis_b.py`. No rerun.
+
+**Verdict: the implementation matches sections 2-5 with Amendment 1. No
+finding changes a reported study-B number or verdict.** Five reporting
+and documentation items (F1-F5); F1 should be fixed before any further run.
+
+Checked and consistent (reference -> section):
+
+- 2.1: RB target is `scale * r * (1 + kappa * Q)` with no alpha_s, no LWMA
+  and no max(u_bar, u) (`reservation.py:230-231`).
+- 2.2 generators: median, 0.95-quantile spread floored at 1e-6
+  (`reservation.py:47-48`); smallest lambda on the 0.01 grid with joint
+  coverage >= 1 - eps, computed exactly from per-sample minimal lambdas
+  plus a float guard; lambda capped at 6 and flagged (`:55-71`).
+  QuantileMLP: Bonferroni `Q(1 - eps/2)` (`:103-108`); quantiles sorted, so
+  they cannot cross (`baselines.py:81`); extended grid applied by
+  `study_b_config` (`experiments_b.py:32-38`).
+- 2.3: base levels, recalibrated levels and every ladder level are clipped
+  to [0.01, 0.60] (`experiments_b.py:87`, `reservation.py:139, 144, 176,
+  180`).
+- 2.4: f_val fitted on slots 0-79, reservations on 80-99 (60 slice-slots),
+  41-point g grid, target from clipped base levels, ties on integer counts
+  then |log g| then smaller g (`reservation.py:133-151`); refit on 0-99 for
+  the test slots (`experiments_b.py:73-77`).
+- 2.5: ladder clip(eps' * 1.5^k), k = 0..11, equal levels merged
+  (`reservation.py:176-182`); queue correction at every level (`:231`);
+  trigger on unassigned or under-allocated in either resource (`:238`);
+  smallest weighted increase in unit-free shortfall, tie by longest
+  deadline (`:242-249`); at most 12 steps, last placement kept (`:237-256`).
+- Amendment 1: recalibration once per seed and candidate, before the loop
+  over s (`experiments_b.py:100-103`); scale on every ladder level.
+- 3: Eq. (20) comparators with M = 200 (`experiments_b.py:144`);
+  QuantileMLP-JCSO uses the same retrained model as QuantileMLP-RB (`:142`);
+  study-A epochs (1600/400/160) in the run config.
+- 4: 30 candidates; objective and P95 tie-break; eligibility requires all
+  60 points, with the stated fallback (`experiments_b.py:177-201`).
+- 5: 80 test seeds; common 21-point scale grid (`:41-44`); budget measured
+  on the requested level-0 target (`reservation.py:256`, `metrics.py:28`);
+  interpolation without extrapolation (`experiments_b.py:285-301`);
+  missing-seed rule on seeds that have every controller of the comparison,
+  at least ceil(0.9 * 80) = 72 (`analysis_b.py:32-50`).
+- No leakage: RB plans use only the predictive banks built from history
+  t-5..t-1 (`common.py:99-107`); `run_episode`'s current request is never
+  passed to RB (`engine.py:80-84`).
+
+Findings:
+
+- **F1 (fix before any rerun). Manifests record the wrong config.**
+  `run_experiment.py:52` writes the config before `exp_test_b` /
+  `exp_validation_b` apply `study_b_config` (`experiments_b.py:221, 270`).
+  Both `results/study_b/manifest.json` and
+  `results/validation_b/manifest.json` therefore show
+  `information: request_observed` and the 12-level QuantileMLP grid. The
+  runs themselves used proactive information and the 15-level grid:
+  QuantileMLP-RB reaches eps = 0.01 (level 0.995) with no capped decisions
+  in `frontier_b.csv`, which the 12-level grid could not do. Fix: write the
+  effective config into the manifest (for example return it from the
+  experiment function), or add a note to both manifests' README entries.
+- **F2 (document). Relaxation order ignores s and Q.** The shortfall used to
+  choose which slice to relax is precomputed on the unscaled ladder r(eps_k)
+  (`reservation.py:189, 246`), not on the reservation actually requested,
+  s * r * (1 + kappa * Q). This matches "precomputed" in section 2.5, but
+  after Amendment 1 the order does not depend on s. Say so in Methods.
+- **F3 (label). `realized_joint_coverage`** (`experiments_b.py:124, 130`) is
+  the coverage of the unscaled level-0 reservation r(eps'), not of the
+  scaled, queue-corrected request or of the allocation. Describe it as
+  "calibrated coverage at s = 1" wherever it is reported.
+- **F4 (missing secondary outcome). Inference time for RB.** Section 6 lists
+  inference time; RB rows carry none (`experiments_b.py:125-133`), only the
+  Eq. (20) rows do (`:153`), and `fit_seconds` (`:79`) includes training.
+  Time `build_bank` separately, or report RB inference time as the
+  Eq. (20) sampling time, which uses the same M = 200 draws.
+- **F5 (definition). Clip fractions.** `decision_flags`
+  (`reservation.py:259-270`) counts a decision as clipped if the level
+  after recalibration (level 0) or on the ladder would leave [0.01, 0.60];
+  clipping of the base level c * b_s before recalibration is not counted.
+  GAN-RB reaches frac_clip_low = 0.67 in some rows. State the definition
+  next to the table.
+
+Still open from the Amendment 1 review: QuantileMLP shortfall is flat
+beyond the grid ends 0.05 and 0.995 (`reservation.py:90-98`), so it affects
+only the relaxation order for QuantileMLP-RB.
