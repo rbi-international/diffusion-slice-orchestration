@@ -37,29 +37,19 @@ LABEL = {"DDPM": "Diffusion", "GAN": "GAN", "QuantileMLP": "Quantile MLP", "Movi
          "Persistence": "Persistence"}
 WORKLOADS = ["normal", "medium", "heavy", "extreme"]
 INFO_LABEL = {"request_observed": "Request observed (Eq. 20)", "proactive": "Proactive reservation"}
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from figure_style import apply_style, save_all  # noqa: E402
+
 MM = 1 / 25.4
 DOUBLE = 183 * MM
 
 
 def setup() -> None:
-    plt.rcParams.update({
-        "font.family": "DejaVu Sans", "font.size": 7, "axes.titlesize": 7.5, "axes.labelsize": 7,
-        "xtick.labelsize": 6.5, "ytick.labelsize": 6.5, "legend.fontsize": 6.5,
-        "axes.edgecolor": INK2, "axes.labelcolor": INK, "xtick.color": INK2, "ytick.color": INK2,
-        "text.color": INK, "axes.linewidth": 0.6, "xtick.major.width": 0.6, "ytick.major.width": 0.6,
-        "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.5, "axes.axisbelow": True,
-        "axes.spines.top": False, "axes.spines.right": False, "lines.linewidth": 1.4,
-        "lines.markersize": 4, "savefig.facecolor": "white", "figure.facecolor": "white",
-        "pdf.fonttype": 42,
-    })
+    apply_style()
 
 
 def save(fig, name: str) -> None:
-    FIG.mkdir(parents=True, exist_ok=True)
-    fig.savefig(FIG / f"{name}.pdf", bbox_inches="tight")
-    fig.savefig(FIG / f"{name}.png", dpi=600, bbox_inches="tight")
-    plt.close(fig)
-    print("wrote", f"results/figures/{name}.pdf/.png")
+    save_all(fig, name)
 
 
 def panel_letter(ax, letter: str) -> None:

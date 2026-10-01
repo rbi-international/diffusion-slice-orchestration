@@ -83,10 +83,10 @@ def fig_forest(tests: pd.DataFrame) -> None:
             sig = r["p_holm"] < 0.05
             col = INK if sig else INK2
             ax.plot([r["mean_diff"] - half, r["mean_diff"] + half], [yi, yi], color=col, lw=1.0)
-            ax.plot(r["mean_diff"], yi, "o", ms=4, mfc=col if sig else "white", mec=col, mew=0.8)
-        ax.axvline(0, color=INK2, lw=0.7)
+            ax.plot(r["mean_diff"], yi, "o", ms=4, mfc=col if sig else "white", mec=col, mew=1.0)
+        ax.axvline(0, color=INK2, lw=1.0)
         for yy in (2.5, 5.5, 8.5):
-            ax.axhline(yy, color=GRID, lw=0.6)
+            ax.axhline(yy, color=GRID, lw=1.0)
         ax.set_title(LABEL[hyp], pad=4, loc="left", fontsize=6.8)
         ax.set_xlabel("Miss-rate difference (pp)")
         panel_letter(ax, letter)
@@ -141,7 +141,6 @@ def main() -> None:
     tests = pd.read_csv(res / "tables" / "cell_tests.csv")
     fig_frontiers(frontier)
     fig_forest(tests)
-    fig_pipeline()
 
 
 if __name__ == "__main__":
